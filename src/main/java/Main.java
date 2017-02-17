@@ -59,36 +59,11 @@ public class Main {
     MjpegServer inputStream = new MjpegServer("MJPEG Server", streamPort);
 
     // Selecting a Camera
-    // Uncomment one of the 2 following camera options
-    // The top one receives a stream from another device, and performs operations based on that
-    // On windows, this one must be used since USB is not supported
-    // The bottom one opens a USB camera, and performs operations on that, along with streaming
-    // the input image so other devices can see it.
 
-    // HTTP Camera
-    /*
-    // This is our camera name from the robot. this can be set in your robot code with the following command
-    // CameraServer.getInstance().startAutomaticCapture("YourCameraNameHere");
-    // "USB Camera 0" is the default if no string is specified
-    String cameraName = "USB Camera 0";
-    HttpCamera camera = setHttpCamera(cameraName, inputStream);
-    // It is possible for the camera to be null. If it is, that means no camera could
-    // be found using NetworkTables to connect to. Create an HttpCamera by giving a specified stream
-    // Note if this happens, no restream will be created
-    if (camera == null) {
-      camera = new HttpCamera("CoprocessorCamera", "YourURLHere");
-      inputStream.setSource(camera);
-    }
-    */
-    
-      
+    /**************************************************
+     * Configure USB Camera (hardwired to /dev/video0)
+     **************************************************/
 
-    /***********************************************/
-
-    // USB Camera
-    // This gets the image from a USB camera 
-    // Usually this will be on device 0, but there are other overloads
-    // that can be used
     UsbCamera camera = setUsbCamera(0, inputStream);
     // Set the resolution for our camera, since this is over USB
     camera.setResolution(640,480);
@@ -129,43 +104,6 @@ public class Main {
 //      imageSource.putFrame(inputImage);
       imageSource.putFrame(colorFilter);
     }
-  }
-
-  private static HttpCamera setHttpCamera(String cameraName, MjpegServer server) {
-    // Start by grabbing the camera from NetworkTables
-    NetworkTable publishingTable = NetworkTable.getTable("CameraPublisher");
-    // Wait for robot to connect. Allow this to be attempted indefinitely
-    while (true) {
-      try {
-        if (publishingTable.getSubTables().size() > 0) {
-          break;
-        }
-        Thread.sleep(500);
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
-
-
-    HttpCamera camera = null;
-    if (!publishingTable.containsSubTable(cameraName)) {
-      return null;
-    }
-    ITable cameraTable = publishingTable.getSubTable(cameraName);
-    String[] urls = cameraTable.getStringArray("streams", null);
-    if (urls == null) {
-      return null;
-    }
-    ArrayList<String> fixedUrls = new ArrayList<String>();
-    for (String url : urls) {
-      if (url.startsWith("mjpg")) {
-        fixedUrls.add(url.split(":", 2)[1]);
-      }
-    }
-    camera = new HttpCamera("CoprocessorCamera", fixedUrls.toArray(new String[0]));
-    server.setSource(camera);
-    return camera;
   }
 
   private static UsbCamera setUsbCamera(int cameraId, MjpegServer server) {
