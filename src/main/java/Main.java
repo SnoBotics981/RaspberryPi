@@ -74,10 +74,13 @@ public class Main {
     imageSink.setSource(camera);
 
     // This creates a CvSource to use. This will take in a Mat image that has had OpenCV operations
-    // operations 
     CvSource imageSource = new CvSource("CV Image Source", VideoMode.PixelFormat.kMJPEG, 640, 480, 30);
     MjpegServer cvStream = new MjpegServer("CV Image Stream", 1186);
     cvStream.setSource(imageSource);
+
+    CvSource rawVideoFeed = new CvSource("Unprocessed Video Feed", VideoMode.PixelFormat.kMJPEG, 640, 480, 30);
+    MjpegServer rawView   = new MjpegServer("CV Image Stream", 1187);
+    rawView.setSource(rawVideoFeed);
 
     // All Mats and Lists should be stored outside the loop to avoid allocations
     // as they are expensive to create
@@ -99,10 +102,10 @@ public class Main {
 
       // Here is where you would write a processed image that you want to restreams
       // This will most likely be a marked up image of what the camera sees
-      // For now, we are just going to stream the HSV image
-//      imageSource.putFrame(hsv);
-//      imageSource.putFrame(inputImage);
+      // Stream the filtered/processed data to the first source
       imageSource.putFrame(colorFilter);
+      // Display the raw camera feed in a separate filter
+      rawVideoFeed.putFrame(inputImage);
     }
   }
 
