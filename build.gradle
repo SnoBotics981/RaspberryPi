@@ -38,6 +38,7 @@ dependencies {
   compile cscoreDep()
   compile 'org.opencv:opencv-java:+'
   compile 'org.eclipse.jetty:jetty-server:+'
+  compile 'org.eclipse.jetty:jetty-servlet:+'
 }
 
 jar {

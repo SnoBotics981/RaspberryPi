@@ -14,6 +14,7 @@ import java.net.SocketException;
 import java.util.Enumeration;
 
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletHandler;
 
 public class Main {
   public static void main(String[] args) {
@@ -93,8 +94,9 @@ public class Main {
 
     // Embed a Jetty server for non-video content
     Server manager = new Server(1181);
-    VisionTarget targetCoords = new VisionTarget();
-    manager.setHandler(targetCoords);
+    ServletHandler mapRequests = new ServletHandler();
+    manager.setHandler(mapRequests);
+    mapRequests.addServletWithMapping(VisionTarget.class, "/*");
     Thread server = new Thread(new Runnable() {
       @Override
       public void run() {
@@ -108,7 +110,7 @@ public class Main {
     });
     server.start();
     System.out.println("Server ready, starting the camera feeds");
-    targetCoords.setAngle(23);
+    VisionTarget.setAngle(23);
 
     // Infinitely process camera feeds
     while (true) {
