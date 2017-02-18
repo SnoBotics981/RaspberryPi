@@ -12,6 +12,8 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
 
+import org.eclipse.jetty.server.Server;
+
 public class Main {
   public static void main(String[] args) {
     // Loads our OpenCV library. This MUST be included
@@ -88,7 +90,24 @@ public class Main {
     Mat hsv = new Mat();	// Convert frame to HSV
     Mat colorFilter = new Mat();
 
-    // Infinitely process image
+    // Embed a Jetty server for non-video content
+    Thread server = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          Server manager = new Server(1181);
+          manager.setHandler(new VisionTarget());
+          manager.start();
+          manager.join();
+        } catch (Exception e) {
+          System.out.println("Unable to start the Vision Target service: " + e.toString() );
+        }
+      }
+    });
+    server.start();
+    System.out.println("Server ready, starting the camera feeds");
+
+    // Infinitely process camera feeds
     while (true) {
       // Grab a frame. If it has a frame time of 0, there was an error.
       // Just skip and continue
