@@ -7,11 +7,15 @@ import org.opencv.core.Mat;
 import org.opencv.core.Core;
 import org.opencv.core.Scalar;
 import org.opencv.core.Point;
+import org.opencv.core.Size;
+import org.opencv.core.MatOfPoint;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.imgproc.Moments;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
+import java.util.List;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletHandler;
@@ -88,9 +92,12 @@ public class Main {
 
     // All Mats and Lists should be stored outside the loop to avoid allocations
     // as they are expensive to create
-    Mat inputImage = new Mat(); // Get frame from camera
-    Mat hsv = new Mat();	// Convert frame to HSV
-    Mat colorFilter = new Mat();
+    Mat inputImage = new Mat();   // Get frame from camera
+    Mat hsv = new Mat();	  // Convert frame to HSV
+    Mat colorFilter = new Mat();  // Filter for the target color
+    // Store a list of the targets found
+    List<MatOfPoint> targets = new ArrayList<MatOfPoint>();
+    Mat targetHierarchy = new Mat(); // OpenCV generates a heirchical sorting of targets
 
     // Embed a Jetty server for non-video content
     Server manager = new Server(1181);
@@ -122,10 +129,26 @@ public class Main {
       // Below is where you would do your OpenCV operations on the provided image
       // The sample below just changes color source to HSV
       Imgproc.cvtColor(inputImage, hsv, Imgproc.COLOR_BGR2HSV);
-      Core.inRange(hsv, new Scalar(20, 100, 100), new Scalar(30, 255, 255), colorFilter);
+      Imgproc.blur(hsv.clone(), hsv, new Size(30,30));
+      // The light ring is green, but the reflected color is kinda bluish
+      Core.inRange(hsv, new Scalar(65, 128, 155), new Scalar(90, 255, 255), colorFilter);
+      Imgproc.findContours(colorFilter.clone(), targets, targetHierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+
+      VisionTarget.setAngle(targets.size());
+      for(MatOfPoint target : targets) {
+        Moments polygon = Imgproc.moments(target);
+        Point center = new Point();
+        center.x = polygon.get_m10() / polygon.get_m00();
+        center.y = polygon.get_m01() / polygon.get_m00();
+        int size = new Double(Math.sqrt(Imgproc.contourArea(target))).intValue();
+        // The colorFilter mat only accepts black or white coloring
+        Imgproc.circle(colorFilter, center, size, new Scalar(255, 255, 255), 3);
+      }
+      targets.clear();
 
       // Stream the filtered/processed data to the first source (for debugging the target detection)
       imageSource.putFrame(colorFilter);
+
       // Display the raw camera feed in a separate filter
       Imgproc.line(inputImage, new Point(200,50), new Point(200,430), new Scalar(0, 255, 0), 10);
       Imgproc.line(inputImage, new Point(440,50), new Point(440,430), new Scalar(0, 255, 0), 10);
