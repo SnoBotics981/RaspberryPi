@@ -91,12 +91,13 @@ public class Main {
     Mat colorFilter = new Mat();
 
     // Embed a Jetty server for non-video content
+    Server manager = new Server(1181);
+    VisionTarget targetCoords = new VisionTarget();
+    manager.setHandler(targetCoords);
     Thread server = new Thread(new Runnable() {
       @Override
       public void run() {
         try {
-          Server manager = new Server(1181);
-          manager.setHandler(new VisionTarget());
           manager.start();
           manager.join();
         } catch (Exception e) {
@@ -106,6 +107,7 @@ public class Main {
     });
     server.start();
     System.out.println("Server ready, starting the camera feeds");
+    targetCoords.setAngle(23);
 
     // Infinitely process camera feeds
     while (true) {
@@ -119,9 +121,7 @@ public class Main {
       Imgproc.cvtColor(inputImage, hsv, Imgproc.COLOR_BGR2HSV);
       Core.inRange(hsv, new Scalar(20, 100, 100), new Scalar(30, 255, 255), colorFilter);
 
-      // Here is where you would write a processed image that you want to restreams
-      // This will most likely be a marked up image of what the camera sees
-      // Stream the filtered/processed data to the first source
+      // Stream the filtered/processed data to the first source (for debugging the target detection)
       imageSource.putFrame(colorFilter);
       // Display the raw camera feed in a separate filter
       rawVideoFeed.putFrame(inputImage);
