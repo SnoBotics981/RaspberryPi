@@ -13,6 +13,8 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
 
+import org.eclipse.jetty.server.Server;
+
 public class Main {
   public static void main(String[] args) {
     // Loads our OpenCV library. This MUST be included
@@ -89,7 +91,26 @@ public class Main {
     Mat hsv = new Mat();	// Convert frame to HSV
     Mat colorFilter = new Mat();
 
-    // Infinitely process image
+    // Embed a Jetty server for non-video content
+    Server manager = new Server(1181);
+    VisionTarget targetCoords = new VisionTarget();
+    manager.setHandler(targetCoords);
+    Thread server = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          manager.start();
+          manager.join();
+        } catch (Exception e) {
+          System.out.println("Unable to start the Vision Target service: " + e.toString() );
+        }
+      }
+    });
+    server.start();
+    System.out.println("Server ready, starting the camera feeds");
+    targetCoords.setAngle(23);
+
+    // Infinitely process camera feeds
     while (true) {
       // Grab a frame. If it has a frame time of 0, there was an error.
       // Just skip and continue
@@ -101,9 +122,7 @@ public class Main {
       Imgproc.cvtColor(inputImage, hsv, Imgproc.COLOR_BGR2HSV);
       Core.inRange(hsv, new Scalar(20, 100, 100), new Scalar(30, 255, 255), colorFilter);
 
-      // Here is where you would write a processed image that you want to restreams
-      // This will most likely be a marked up image of what the camera sees
-      // Stream the filtered/processed data to the first source
+      // Stream the filtered/processed data to the first source (for debugging the target detection)
       imageSource.putFrame(colorFilter);
       // Display the raw camera feed in a separate filter
       Imgproc.line(inputImage, new Point(200,50), new Point(200,430), new Scalar(0, 255, 0), 10);
