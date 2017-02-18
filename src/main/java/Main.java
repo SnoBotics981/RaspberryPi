@@ -6,6 +6,7 @@ import edu.wpi.cscore.*;
 import org.opencv.core.Mat;
 import org.opencv.core.Core;
 import org.opencv.core.Scalar;
+import org.opencv.core.Point;
 import org.opencv.imgproc.Imgproc;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -105,6 +106,8 @@ public class Main {
       // Stream the filtered/processed data to the first source
       imageSource.putFrame(colorFilter);
       // Display the raw camera feed in a separate filter
+      Imgproc.line(inputImage, new Point(200,50), new Point(200,430), new Scalar(0, 255, 0), 10);
+      Imgproc.line(inputImage, new Point(440,50), new Point(440,430), new Scalar(0, 255, 0), 10);
       rawVideoFeed.putFrame(inputImage);
     }
   }
