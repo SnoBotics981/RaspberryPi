@@ -1,31 +1,28 @@
-# Java sample vision system
+# SnoBotics Vision Coprocessor
 
-This is the WPILib sample build system for building Java based vision targeting for running on systems other than the roboRIO. This currently supports the following platforms
+This software is derived from the WPILib sample; this will run a co-processor to handle the game-related vision subsystem.
+The software is designed primarily for Raspberry Pi and is only directly supported when running Raspbian, but other linux-based environments may work also.
 
-* Windows
-* Raspberry Pi running Raspbian
-* Generic Armhf devices (such as the BeagleBone Black or the Jetson)
+The core dependencies are:
 
-It has been designed to be easy to setup and use, and only needs a few minor settings to pick which system you want to be ran on. It has samples for interfacing with NetworkTables and CsCore from
-any device, along with performing OpenCV operations.
+* WPILib (FRC-compliant interfaces)
+* OpenCV (Vision processing)
+* Jetty (Multi-purpose custom network services)
 
-## Choosing which system to build for
-As there is no way to autodetect which system you want to build for, such as building for a Raspberry Pi on a windows desktop, you have to manually select which system you want to build for.
-To do this, open the `build.gradle` file. Near the top at line 10 starts a group of comments explaining what to do. For a basic rundown, there are 3 lines that start with `ext.buildType =`. 
-To select a device, just uncomment the system you want to build for. 
+## Cross-platform development
+The software is designed to run on a Raspberry Pi, but can be compiled from any system which supports Gradle.
+In the file `build.gradle`, there is a setting line which starts `ext.buildType =`.  This value can be changed to compile for other environments.
 
 Note it is possible to easily switch which system you want to target. To do so, just switch which build type is uncommented. When you do this, you will have to run a clean `gradlew clean` in order to
 clear out any old artifacts. 
 
-## Choosing the camera type
-This sample includes 2 ways to get a camera image. The first way is from a stream coming from the roboRIO, which is created with `CameraServer.getInstance().startAutomaticCapture();`. This 
-is the only method that is supported on windows. The second way is by opening a USB camera directly on the device. This will likely allow higher resolutions, however is only supported on Linux
-devices.
+## USB cameras
+The code is designed to read from local cameras over the Raspberry Pi's USB ports.  Before launching the code, plug in a USB camera.  This device will be read as "/dev/video0" and is identified in the code as device 0.
 
 To select between the types, open the `Main.java` file in `src/main/java`, and scroll down to the line that says "Selecting a Camera". Follow the directions there to select one.
 
-## Building and running on the local device
-If you are running the build for your specific platform on the device you plan on running, you can use `gradlew run` to run the code directly. You can also run `gradlew build` to run a build.
+## Building and running on the Raspberry Pi
+If you are running the build for your specific platform on the device you plan on running, you can use `./gradlew run` to run the code directly. You can also run `./gradlew build` to run a build without executing it.
 When doing this, the output files will be placed into `output\`. From there, you can run either the .bat file on windows or the shell script on unix in order to run your project.
 
 ## Building for another platform
@@ -41,4 +38,4 @@ to run a pipeline generated from GRIP. In addition, a connection to NetworkTable
 
 ## Other configuration options
 The build script provides a few other configuration options. These include selecting the main class name, and providing an output name for the project.
-Please see the `build.gradle` file for where to change these. 
+Please see the `build.gradle` file for where to change these.
