@@ -129,9 +129,9 @@ public class Main {
       // Below is where you would do your OpenCV operations on the provided image
       // The sample below just changes color source to HSV
       Imgproc.cvtColor(inputImage, hsv, Imgproc.COLOR_BGR2HSV);
-      Imgproc.blur(hsv.clone(), hsv, new Size(30,30));
+      Imgproc.blur(hsv.clone(), hsv, new Size(22,22));
       // The light ring is green, but the reflected color is kinda bluish
-      Core.inRange(hsv, new Scalar(65, 128, 155), new Scalar(90, 255, 255), colorFilter);
+      Core.inRange(hsv, new Scalar(65, 108, 155), new Scalar(90, 255, 255), colorFilter);
       Imgproc.findContours(colorFilter.clone(), targets, targetHierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
 
       VisionTarget.setAngle(targets.size());
