@@ -17,9 +17,6 @@ import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.List;
 
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlet.ServletHandler;
-
 public class Main {
   public static void main(String[] args) {
     // Loads our OpenCV library. This MUST be included
@@ -100,22 +97,7 @@ public class Main {
     Mat targetHierarchy = new Mat(); // OpenCV generates a heirchical sorting of targets
 
     // Embed a Jetty server for non-video content
-    Server manager = new Server(1181);
-    ServletHandler mapRequests = new ServletHandler();
-    manager.setHandler(mapRequests);
-    mapRequests.addServletWithMapping(VisionTarget.class, "/*");
-    Thread server = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          manager.start();
-          manager.join();
-        } catch (Exception e) {
-          System.out.println("Unable to start the Vision Target service: " + e.toString() );
-        }
-      }
-    });
-    server.start();
+    new HttpManager().runServer();
     System.out.println("Server ready, starting the camera feeds");
     VisionTarget.setAngle(23);
 
