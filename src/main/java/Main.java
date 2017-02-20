@@ -26,24 +26,24 @@ public class Main {
     // Testing network autoconfigure options
     Enumeration<NetworkInterface> interfaces = null;
     try {
-        interfaces = NetworkInterface.getNetworkInterfaces();
+      interfaces = NetworkInterface.getNetworkInterfaces();
     } catch (SocketException e) {
-        System.out.println("SocketException error when attempting to load network devices");
-	e.printStackTrace();
-	return;
+      System.out.println("SocketException error when attempting to load network devices");
+      e.printStackTrace();
+      return;
     }
 
     if (interfaces != null) {
-        while ( interfaces.hasMoreElements() ) {
-            NetworkInterface i = interfaces.nextElement();
-            Enumeration<InetAddress> addresses = i.getInetAddresses();
-            while ( addresses.hasMoreElements() ) {
-                InetAddress address = addresses.nextElement();
-                if (!address.isLoopbackAddress() && address.isSiteLocalAddress()) {
-                    System.out.println("Network address: " + address.getHostAddress());
-                }
-            }
+      while ( interfaces.hasMoreElements() ) {
+        NetworkInterface i = interfaces.nextElement();
+        Enumeration<InetAddress> addresses = i.getInetAddresses();
+        while ( addresses.hasMoreElements() ) {
+          InetAddress address = addresses.nextElement();
+          if (!address.isLoopbackAddress() && address.isSiteLocalAddress()) {
+            System.out.println("Network address: " + address.getHostAddress());
+          }
         }
+      }
     }
 
 /* Use this code block when operating as a client; the roboRIO should run server code
@@ -179,6 +179,11 @@ public class Main {
 
       double offset = ( (coords[0].val[0] + coords[1].val[0]) / 2 ) - 320;
       VisionTarget.setAngle(new Double(offset).intValue());
+
+      double spacing = Math.abs(coords[0].val[0] - coords[1].val[0]);
+      double targetArea = coords[0].val[2] + coords[1].val[2];
+      double closeness = spacing * targetArea / 2000.0;
+      VisionTarget.setCloseness(new Double(closeness).intValue());
 
       // Reseet target detectors after each frame
       coords[0].set(new double[]{0, 0, 0});
