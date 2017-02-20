@@ -129,19 +129,22 @@ public class Main {
   private static Mat targetHierarchy; // OpenCV generates a heirchical sorting of targets
   private static Moments polygon;
   private static Point center;
+  private static Scalar[] coords = new Scalar[2];
 
   private static void initMats() {
     hsv = new Mat();
     targets = new ArrayList<MatOfPoint>();
     targetHierarchy = new Mat();
     center = new Point();
+    coords[0] = new Scalar(0, 0, 0);
+    coords[1] = new Scalar(0, 0, 0);
   }
 
   private static void findTargets(Mat frame, CvSource outStream) {
       // Below is where you would do your OpenCV operations on the provided image
       // The sample below just changes color source to HSV
       Imgproc.cvtColor(frame, hsv, Imgproc.COLOR_BGR2HSV);
-      Imgproc.blur(hsv.clone(), hsv, new Size(25,25));
+      Imgproc.blur(hsv.clone(), hsv, new Size(26,26));
 
       // Sharpen the image before processing it
       // Disabling this for now because it seems to make the streams unstable
@@ -152,15 +155,34 @@ public class Main {
       Core.inRange(hsv.clone(), new Scalar(50, 128, 200), new Scalar(180, 220, 255), hsv);
       Imgproc.findContours(hsv.clone(), targets, targetHierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
 
-      VisionTarget.setAngle(targets.size());
       for(MatOfPoint target : targets) {
         polygon = Imgproc.moments(target);
         center.x = polygon.get_m10() / polygon.get_m00();
         center.y = polygon.get_m01() / polygon.get_m00();
-        int size = new Double(Math.sqrt(Imgproc.contourArea(target))).intValue();
+        double size = Imgproc.contourArea(target);
+        int debugSize = new Double(Math.sqrt(size)).intValue();
         // The colorFilter mat only accepts black or white coloring
-        Imgproc.circle(hsv, center, size, new Scalar(255, 255, 255), 3);
+        if (size < 50.0) continue;
+        if (size >= coords[0].val[2]) {
+          coords[1].set(coords[0].val);
+          coords[0].set(new double[]{center.x, center.y, size});
+        } else {
+          if (size >= coords[1].val[2]) {
+            coords[1].set(new double[]{center.x, center.y, size});
+          }
+        }
       }
+      int coordSize = new Double(Math.sqrt(coords[0].val[2])).intValue();
+      Imgproc.circle(hsv, new Point(coords[0].val[0], coords[0].val[1]), coordSize, new Scalar(255, 255, 255), 3);
+      coordSize = new Double(Math.sqrt(coords[1].val[2])).intValue();
+      Imgproc.circle(hsv, new Point(coords[1].val[0], coords[1].val[1]), coordSize, new Scalar(255, 255, 255), 3);
+
+      double offset = ( (coords[0].val[0] + coords[1].val[0]) / 2 ) - 320;
+      VisionTarget.setAngle(new Double(offset).intValue());
+
+      // Reseet target detectors after each frame
+      coords[0].set(new double[]{0, 0, 0});
+      coords[1].set(new double[]{0, 0, 0});
       targets.clear();
 
       // Stream the filtered/processed data to the first source (for debugging the target detection)
