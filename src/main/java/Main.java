@@ -18,6 +18,7 @@ import java.util.Enumeration;
 import java.util.List;
 
 public class Main {
+
   public static void main(String[] args) {
     // Loads our OpenCV library. This MUST be included
     System.loadLibrary("opencv_java310");
@@ -63,8 +64,6 @@ public class Main {
     // This stores our reference to our mjpeg server for streaming the input image
     MjpegServer inputStream = new MjpegServer("MJPEG Server", streamPort);
 
-    // Selecting a Camera
-
     /**************************************************
      * Configure USB Camera (hardwired to /dev/video0)
      **************************************************/
@@ -90,11 +89,8 @@ public class Main {
     // All Mats and Lists should be stored outside the loop to avoid allocations
     // as they are expensive to create
     Mat inputImage = new Mat();   // Get frame from camera
-    Mat hsv = new Mat();	  // Convert frame to HSV
-    Mat colorFilter = new Mat();  // Filter for the target color
-    // Store a list of the targets found
-    List<MatOfPoint> targets = new ArrayList<MatOfPoint>();
-    Mat targetHierarchy = new Mat(); // OpenCV generates a heirchical sorting of targets
+//    Mat sharpen = new Mat();      // Sharpen an image using GaussianBlur
+    initMats();
 
     // Embed a Jetty server for non-video content
     new HttpManager().runServer();
@@ -108,42 +104,70 @@ public class Main {
       long frameTime = imageSink.grabFrame(inputImage);
       if (frameTime == 0) continue;
 
-      // Below is where you would do your OpenCV operations on the provided image
-      // The sample below just changes color source to HSV
-      Imgproc.cvtColor(inputImage, hsv, Imgproc.COLOR_BGR2HSV);
-      Imgproc.blur(hsv.clone(), hsv, new Size(22,22));
-      // The light ring is green, but the reflected color is kinda bluish
-      Core.inRange(hsv, new Scalar(65, 108, 155), new Scalar(90, 255, 255), colorFilter);
-      Imgproc.findContours(colorFilter.clone(), targets, targetHierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
-
-      VisionTarget.setAngle(targets.size());
-      for(MatOfPoint target : targets) {
-        Moments polygon = Imgproc.moments(target);
-        Point center = new Point();
-        center.x = polygon.get_m10() / polygon.get_m00();
-        center.y = polygon.get_m01() / polygon.get_m00();
-        int size = new Double(Math.sqrt(Imgproc.contourArea(target))).intValue();
-        // The colorFilter mat only accepts black or white coloring
-        Imgproc.circle(colorFilter, center, size, new Scalar(255, 255, 255), 3);
-      }
-      targets.clear();
-
-      // Stream the filtered/processed data to the first source (for debugging the target detection)
-      imageSource.putFrame(colorFilter);
+      findTargets(inputImage.clone(), imageSource);
 
       // Display the raw camera feed in a separate filter
-      Imgproc.line(inputImage, new Point(200,50), new Point(200,430), new Scalar(0, 255, 0), 10);
-      Imgproc.line(inputImage, new Point(440,50), new Point(440,430), new Scalar(0, 255, 0), 10);
+//      Imgproc.line(inputImage, new Point(200,50), new Point(200,430), new Scalar(0, 255, 0), 10);
+//      Imgproc.line(inputImage, new Point(440,50), new Point(440,430), new Scalar(0, 255, 0), 10);
       rawVideoFeed.putFrame(inputImage);
+      inputImage.release();
+      System.gc();
     }
   }
 
   private static UsbCamera setUsbCamera(int cameraId, MjpegServer server) {
-    // This gets the image from a USB camera 
+    // This gets the image from a USB camera
     // Usually this will be on device 0, but there are other overloads
     // that can be used
     UsbCamera camera = new UsbCamera("CoprocessorCamera", cameraId);
     server.setSource(camera);
     return camera;
+  }
+
+  private static Mat hsv;             // Convert frame to HSV
+  private static List<MatOfPoint> targets; // findContours() returns a list of shapes
+  private static Mat targetHierarchy; // OpenCV generates a heirchical sorting of targets
+  private static Moments polygon;
+  private static Point center;
+
+  private static void initMats() {
+    hsv = new Mat();
+    targets = new ArrayList<MatOfPoint>();
+    targetHierarchy = new Mat();
+    center = new Point();
+  }
+
+  private static void findTargets(Mat frame, CvSource outStream) {
+      // Below is where you would do your OpenCV operations on the provided image
+      // The sample below just changes color source to HSV
+      Imgproc.cvtColor(frame, hsv, Imgproc.COLOR_BGR2HSV);
+      Imgproc.blur(hsv.clone(), hsv, new Size(25,25));
+
+      // Sharpen the image before processing it
+      // Disabling this for now because it seems to make the streams unstable
+//      Imgproc.GaussianBlur(hsv, sharpen, new Size(0, 0), 3);
+//      Core.addWeighted(hsv.clone(), 1.5, sharpen, -0.5, 0, hsv);
+
+      // The light ring is green, but the reflected color is kinda bluish
+      Core.inRange(hsv.clone(), new Scalar(50, 128, 200), new Scalar(180, 220, 255), hsv);
+      Imgproc.findContours(hsv.clone(), targets, targetHierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+
+      VisionTarget.setAngle(targets.size());
+      for(MatOfPoint target : targets) {
+        polygon = Imgproc.moments(target);
+        center.x = polygon.get_m10() / polygon.get_m00();
+        center.y = polygon.get_m01() / polygon.get_m00();
+        int size = new Double(Math.sqrt(Imgproc.contourArea(target))).intValue();
+        // The colorFilter mat only accepts black or white coloring
+        Imgproc.circle(hsv, center, size, new Scalar(255, 255, 255), 3);
+      }
+      targets.clear();
+
+      // Stream the filtered/processed data to the first source (for debugging the target detection)
+      outStream.putFrame(hsv);
+
+      // OpenCV needs help with memory management
+      hsv.release();
+      frame.release();
   }
 }
