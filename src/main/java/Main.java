@@ -77,6 +77,11 @@ public class Main {
     CvSink imageSink = new CvSink("CV Image Grabber");
     imageSink.setSource(camera);
 
+    // If the second USB camera is present, run an isolated video feed for the driver
+    MjpegServer rvStream = new MjpegServer("Rear-view Server", 1188);
+    UsbCamera rearView = setUsbCamera(1, rvStream);
+    rearView.setResolution(640, 480);
+
     // This creates a CvSource to use. This will take in a Mat image that has had OpenCV operations
     CvSource imageSource = new CvSource("CV Image Source", VideoMode.PixelFormat.kMJPEG, 640, 480, 30);
     MjpegServer cvStream = new MjpegServer("CV Image Stream", 1186);
@@ -144,7 +149,7 @@ public class Main {
       // Below is where you would do your OpenCV operations on the provided image
       // The sample below just changes color source to HSV
       Imgproc.cvtColor(frame, hsv, Imgproc.COLOR_BGR2HSV);
-      Imgproc.blur(hsv.clone(), hsv, new Size(26,26));
+      Imgproc.blur(hsv.clone(), hsv, new Size(27,27));
 
       // Sharpen the image before processing it
       // Disabling this for now because it seems to make the streams unstable
@@ -152,7 +157,7 @@ public class Main {
 //      Core.addWeighted(hsv.clone(), 1.5, sharpen, -0.5, 0, hsv);
 
       // The light ring is green, but the reflected color is kinda bluish
-      Core.inRange(hsv.clone(), new Scalar(50, 128, 200), new Scalar(180, 220, 255), hsv);
+      Core.inRange(hsv.clone(), new Scalar(50, 8, 200), new Scalar(180, 230, 255), hsv);
       Imgproc.findContours(hsv.clone(), targets, targetHierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
 
       for(MatOfPoint target : targets) {
@@ -182,7 +187,7 @@ public class Main {
 
       double spacing = Math.abs(coords[0].val[0] - coords[1].val[0]);
       double targetArea = coords[0].val[2] + coords[1].val[2];
-      double closeness = spacing * targetArea / 2000.0;
+      double closeness = Math.sqrt(spacing * targetArea);
       VisionTarget.setCloseness(new Double(closeness).intValue());
 
       // Reseet target detectors after each frame
