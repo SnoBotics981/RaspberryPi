@@ -30,12 +30,26 @@ If you are building for another platform, trying to run `gradlew run` will not w
 is placed in `output\`. This zip contains the built jar, the OpenCV library for your selected platform, and either a .bat file or shell script to run everything. All you have to do is copy
 this file to the system, extract it, then run the .bat or shell script to run your program
 
-## What this gives you
-This sample gets an image either from a USB camera or an already existing stream. It then restreams the input image in it's raw form in order to make it viewable on another system.
-It then creates an OpenCV sink from the camera, which allows us to grab OpenCV images. It then creates an output stream for an OpenCV image, for instance so you can stream an annotated
-image. The default sample just performs a color conversion from BGR to HSV, however from there it is easy to create your own OpenCV processing in order to run everything. In addition, it is possible
-to run a pipeline generated from GRIP. In addition, a connection to NetworkTables is set up, so you can send data regarding the targets back to your robot.
-
 ## Other configuration options
 The build script provides a few other configuration options. These include selecting the main class name, and providing an output name for the project.
 Please see the `build.gradle` file for where to change these.
+
+# Network Interface
+
+The server is designed to provide a collection of video feeds, including targetting information for the gear lift peg.
+
+Video feeds are available at the following network addresses:
+* Vision detection debug feed (`http://<raspberry-pi.IP.address>:1186/stream.mjpg`)
+* Front-facing display (`http://<raspberry-pi.IP.address>:1187/stream.mjpg`)
+* Read-view display (`http://<raspberry-pi.IP.address>:1188/stream.mjpg`)
+* Navigation feed (`http://<raspberry-pi.IP.address>:1181/nav`)
+
+The navigation feed returns as a JSON object containing two values:
+* 'direction':  
+    The relative angle to the target's center, in a range of +/-360.  Positive numbers are to the right, negative numbers to the left.
+    The values scale based upon the viewfinder angle of camera #0 (front-facing).
+* 'closeness':  
+    A relative scale indicating how close the target is to the camera.  This value is computed based on the size and
+relative distance of the two targets (when visible).
+    The value is larger when the camera is close to the target.  See `distance.md` for more details.
+

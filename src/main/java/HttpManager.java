@@ -15,7 +15,7 @@ public class HttpManager {
     httpManager = new Server(1181);
     router = new ServletHandler();
     httpManager.setHandler(router);
-    router.addServletWithMapping(VisionTarget.class, "/*");
+    router.addServletWithMapping(VisionTarget.class, "/nav");
   }
 
   public void runServer() {
