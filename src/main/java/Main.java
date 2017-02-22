@@ -112,8 +112,8 @@ public class Main {
       findTargets(inputImage.clone(), imageSource);
 
       // Display the raw camera feed in a separate filter
-//      Imgproc.line(inputImage, new Point(200,50), new Point(200,430), new Scalar(0, 255, 0), 10);
-//      Imgproc.line(inputImage, new Point(440,50), new Point(440,430), new Scalar(0, 255, 0), 10);
+      Imgproc.line(inputImage, new Point(200,50), new Point(200,430), new Scalar(0, 255, 0), 10);
+      Imgproc.line(inputImage, new Point(440,50), new Point(440,430), new Scalar(0, 255, 0), 10);
       rawVideoFeed.putFrame(inputImage);
       inputImage.release();
       System.gc();
