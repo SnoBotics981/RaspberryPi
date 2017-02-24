@@ -14,6 +14,9 @@ import org.opencv.imgproc.Moments;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -45,6 +48,28 @@ public class Main {
         }
       }
     }
+
+    int teamNumber = 0;
+    try {
+      System.out.println("Use avahi to detect the configured team address");
+      Process findTeamNumber = Runtime.getRuntime().exec(new String[]{
+        "bash","-c","avahi-browse -larpc | grep \"=;eth0;IPv4\" | grep \";Workstation;\""
+      });
+      findTeamNumber.waitFor();
+      BufferedReader data = new BufferedReader(
+        new InputStreamReader(findTeamNumber.getInputStream()));
+      String line;
+      while((line = data.readLine()) != null) {
+	String hostname = line.split(";")[6];
+	String avahiID = hostname.split("-")[1];
+	teamNumber = Integer.parseInt(avahiID);
+      }
+      data.close();
+    } catch (IOException | InterruptedException e) {
+      System.out.println("Exception while scanning robot network");
+      e.printStackTrace();
+    }
+    System.out.println("Team number detected: " + teamNumber);
 
 /* Use this code block when operating as a client; the roboRIO should run server code
     // Connect NetworkTables, and get access to the publishing table
