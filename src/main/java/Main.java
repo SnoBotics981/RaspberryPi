@@ -81,7 +81,7 @@ public class Main {
     }
 
     NetworkTable.initialize();
-
+    data = NetworkTable.getTable("navigation");
 
     // This is the network port you want to stream the raw received image to
     // By rules, this has to be between 1180 and 1190, so 1185 is a good choice
@@ -161,6 +161,7 @@ public class Main {
   private static Moments polygon;
   private static Point center;
   private static Scalar[] coords = new Scalar[2];
+  private static NetworkTable data;
 
   private static void initMats() {
     hsv = new Mat();
@@ -215,6 +216,9 @@ public class Main {
       double targetArea = coords[0].val[2] + coords[1].val[2];
       double closeness = Math.sqrt(spacing * targetArea);
       VisionTarget.setCloseness(new Double(closeness).intValue());
+
+      data.putNumber("angle", new Double(offset).intValue());
+      data.putNumber("closeness", new Double(closeness).intValue());
 
       // Reseet target detectors after each frame
       coords[0].set(new double[]{0, 0, 0});
