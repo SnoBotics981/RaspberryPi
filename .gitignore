@@ -2,3 +2,5 @@
 build/*
 output/*
 **/*.swp
+/bin/
+/.gradle/
