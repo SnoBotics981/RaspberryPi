@@ -53,7 +53,7 @@ public class Main {
     try {
       System.out.println("Use avahi to detect the configured team address");
       Process findTeamNumber = Runtime.getRuntime().exec(new String[]{
-        "bash","-c","avahi-browse -larpc | grep \"=;eth0;IPv4\" | grep \";Workstation;\""
+        "bash","-c","avahi-browse -larpt | grep \"=;eth0;IPv4\" | grep \";Workstation;\""
       });
       findTeamNumber.waitFor();
       BufferedReader data = new BufferedReader(
@@ -71,13 +71,14 @@ public class Main {
     }
     System.out.println("Team number detected: " + teamNumber);
 
-/* Use this code block when operating as a client; the roboRIO should run server code
-    // Connect NetworkTables, and get access to the publishing table
-    NetworkTable.setClientMode();
-    // Set your team number here
-    NetworkTable.setTeam(982);
-*/
-    NetworkTable.setServerMode();
+    // If the teamNumber code detects the roboRIO, connect using the computed team number
+    // If no roboRIO was detected, run the code in server mode
+    if (0 == teamNumber) {
+      NetworkTable.setServerMode();
+    } else {
+      NetworkTable.setClientMode();
+      NetworkTable.setTeam(982);
+    }
 
     NetworkTable.initialize();
 
