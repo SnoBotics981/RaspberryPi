@@ -39,6 +39,7 @@ dependencies {
   compile 'org.opencv:opencv-java:+'
   compile 'org.eclipse.jetty:jetty-server:+'
   compile 'org.eclipse.jetty:jetty-servlet:+'
+  testCompile 'junit:junit:4.12'
 }
 
 jar {
@@ -116,6 +117,12 @@ task zipOutput(type: Zip) {
     from (file("${buildDir}/run${projectName}")) {
       fileMode 0777
     }
+  }
+}
+
+test {
+  testLogging {
+    showStandardStreams = true
   }
 }
 
