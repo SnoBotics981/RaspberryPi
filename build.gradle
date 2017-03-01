@@ -123,6 +123,8 @@ task zipOutput(type: Zip) {
 test {
   testLogging {
     showStandardStreams = true
+    exceptionFormat = 'full'
+    events "standardOut", "started", "passed", "skipped", "failed"
   }
 }
 
