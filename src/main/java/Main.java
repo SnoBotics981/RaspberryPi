@@ -87,21 +87,15 @@ public class Main {
     // By rules, this has to be between 1180 and 1190, so 1185 is a good choice
     int streamPort = 1185;
 
-    // This stores our reference to our mjpeg server for streaming the input image
+    /******************************************************
+     * Configure USB Camera (device links are /dev/video#)
+     *
+     * Standardizing on 640x480 as the video resolution
+     ******************************************************/
+
     MjpegServer inputStream = new MjpegServer("MJPEG Server", streamPort);
-
-    /**************************************************
-     * Configure USB Camera (hardwired to /dev/video0)
-     **************************************************/
-
     UsbCamera camera = setUsbCamera(0, inputStream);
-    // Set the resolution for our camera, since this is over USB
     camera.setResolution(640,480);
-
-    // This creates a CvSink for us to use. This grabs images from our selected camera, 
-    // and will allow us to use those images in opencv
-    CvSink imageSink = new CvSink("CV Image Grabber");
-    imageSink.setSource(camera);
 
     // If the second USB camera is present, run an isolated video feed for the driver
     MjpegServer rvStream = new MjpegServer("Rear-view Server", 1188);
@@ -117,6 +111,12 @@ public class Main {
     MjpegServer rawView   = new MjpegServer("CV Image Stream", 1187);
     rawView.setSource(rawVideoFeed);
 
+    // This creates a CvSink for us to use. This grabs images from our selected camera,
+    // and will allow us to use those images in OpenCV.  To toggle processing
+    // feeds (below), set the source to use a different device.
+    CvSink imageSink = new CvSink("CV Image Grabber");
+    imageSink.setSource(camera);
+
     // All Mats and Lists should be stored outside the loop to avoid allocations
     // as they are expensive to create
     Mat inputImage = new Mat();   // Get frame from camera
@@ -130,8 +130,10 @@ public class Main {
 
     // Infinitely process camera feeds
     while (true) {
+      // Allow the robot/dashboard/other to select a camera for vision processing
+      String sourceCamera = data.getString("visionCamera", "0");
       // Grab a frame. If it has a frame time of 0, there was an error.
-      // Just skip and continue
+      // If so, skip and continue
       long frameTime = imageSink.grabFrame(inputImage);
       if (frameTime == 0) continue;
 
