@@ -1,4 +1,5 @@
 import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -22,6 +23,7 @@ public class TestNetworkTables implements ITableListener {
     NetworkTable.initialize();
 
     NetworkTable data = NetworkTable.getTable("navigation");
+    assumeTrue("Server not detected, skipping test", data.isConnected());
     data.addTableListener(this);
 
     System.out.println("Wait 5 seconds for valueChanged() to respond");

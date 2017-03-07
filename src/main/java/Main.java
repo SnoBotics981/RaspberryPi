@@ -87,26 +87,23 @@ public class Main {
     // By rules, this has to be between 1180 and 1190, so 1185 is a good choice
     int streamPort = 1185;
 
-    // This stores our reference to our mjpeg server for streaming the input image
+    /******************************************************
+     * Configure USB Camera (device links are /dev/video#)
+     *
+     * Standardizing on 640x480 as the video resolution
+     ******************************************************/
+
     MjpegServer inputStream = new MjpegServer("MJPEG Server", streamPort);
-
-    /**************************************************
-     * Configure USB Camera (hardwired to /dev/video0)
-     **************************************************/
-
     UsbCamera camera = setUsbCamera(0, inputStream);
     // Set the resolution for our camera, since this is over USB
-    camera.setResolution(640,480);
-
-    // This creates a CvSink for us to use. This grabs images from our selected camera, 
-    // and will allow us to use those images in opencv
-    CvSink imageSink = new CvSink("CV Image Grabber");
-    imageSink.setSource(camera);
+    camera.setResolution(320,240);
+    camera.setFPS(20);
 
     // If the second USB camera is present, run an isolated video feed for the driver
     MjpegServer rvStream = new MjpegServer("Rear-view Server", 1188);
     UsbCamera rearView = setUsbCamera(1, rvStream);
-    rearView.setResolution(640, 480);
+    rearView.setResolution(320, 240);
+    rearView.setFPS(20);
 
     // This creates a CvSource to use. This will take in a Mat image that has had OpenCV operations
     CvSource imageSource = new CvSource("CV Image Source", VideoMode.PixelFormat.kMJPEG, 640, 480, 30);
@@ -116,6 +113,12 @@ public class Main {
     CvSource rawVideoFeed = new CvSource("Unprocessed Video Feed", VideoMode.PixelFormat.kMJPEG, 640, 480, 30);
     MjpegServer rawView   = new MjpegServer("CV Image Stream", 1187);
     rawView.setSource(rawVideoFeed);
+
+    // This creates a CvSink for us to use. This grabs images from our selected camera,
+    // and will allow us to use those images in OpenCV.  To toggle processing
+    // feeds (below), set the source to use a different device.
+    CvSink imageSink = new CvSink("CV Image Grabber");
+    imageSink.setSource(camera);
 
     // All Mats and Lists should be stored outside the loop to avoid allocations
     // as they are expensive to create
@@ -130,16 +133,18 @@ public class Main {
 
     // Infinitely process camera feeds
     while (true) {
+      // Allow the robot/dashboard/other to select a camera for vision processing
+      String sourceCamera = data.getString("visionCamera", "0");
       // Grab a frame. If it has a frame time of 0, there was an error.
-      // Just skip and continue
+      // If so, skip and continue
       long frameTime = imageSink.grabFrame(inputImage);
       if (frameTime == 0) continue;
 
       findTargets(inputImage.clone(), imageSource);
 
       // Display the raw camera feed in a separate filter
-      Imgproc.line(inputImage, new Point(200,50), new Point(200,430), new Scalar(0, 255, 0), 10);
-      Imgproc.line(inputImage, new Point(440,50), new Point(440,430), new Scalar(0, 255, 0), 10);
+      Imgproc.line(inputImage, new Point(100,20), new Point(100,220), new Scalar(0, 255, 0), 7);
+      Imgproc.line(inputImage, new Point(220,20), new Point(220,220), new Scalar(0, 255, 0), 7);
       rawVideoFeed.putFrame(inputImage);
       inputImage.release();
       System.gc();
@@ -209,7 +214,7 @@ public class Main {
       coordSize = new Double(Math.sqrt(coords[1].val[2])).intValue();
       Imgproc.circle(hsv, new Point(coords[1].val[0], coords[1].val[1]), coordSize, new Scalar(255, 255, 255), 3);
 
-      double offset = ( (coords[0].val[0] + coords[1].val[0]) / 2 ) - 320;
+      double offset = ( (coords[0].val[0] + coords[1].val[0]) / 2 ) - 160;
       VisionTarget.setAngle(new Double(offset).intValue());
 
       double spacing = Math.abs(coords[0].val[0] - coords[1].val[0]);
