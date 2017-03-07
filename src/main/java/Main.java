@@ -95,12 +95,15 @@ public class Main {
 
     MjpegServer inputStream = new MjpegServer("MJPEG Server", streamPort);
     UsbCamera camera = setUsbCamera(0, inputStream);
-    camera.setResolution(640,480);
+    // Set the resolution for our camera, since this is over USB
+    camera.setResolution(320,240);
+    camera.setFPS(20);
 
     // If the second USB camera is present, run an isolated video feed for the driver
     MjpegServer rvStream = new MjpegServer("Rear-view Server", 1188);
     UsbCamera rearView = setUsbCamera(1, rvStream);
-    rearView.setResolution(640, 480);
+    rearView.setResolution(320, 240);
+    rearView.setFPS(20);
 
     // This creates a CvSource to use. This will take in a Mat image that has had OpenCV operations
     CvSource imageSource = new CvSource("CV Image Source", VideoMode.PixelFormat.kMJPEG, 640, 480, 30);
@@ -140,8 +143,8 @@ public class Main {
       findTargets(inputImage.clone(), imageSource);
 
       // Display the raw camera feed in a separate filter
-      Imgproc.line(inputImage, new Point(200,50), new Point(200,430), new Scalar(0, 255, 0), 10);
-      Imgproc.line(inputImage, new Point(440,50), new Point(440,430), new Scalar(0, 255, 0), 10);
+      Imgproc.line(inputImage, new Point(100,20), new Point(100,220), new Scalar(0, 255, 0), 7);
+      Imgproc.line(inputImage, new Point(220,20), new Point(220,220), new Scalar(0, 255, 0), 7);
       rawVideoFeed.putFrame(inputImage);
       inputImage.release();
       System.gc();
@@ -211,7 +214,7 @@ public class Main {
       coordSize = new Double(Math.sqrt(coords[1].val[2])).intValue();
       Imgproc.circle(hsv, new Point(coords[1].val[0], coords[1].val[1]), coordSize, new Scalar(255, 255, 255), 3);
 
-      double offset = ( (coords[0].val[0] + coords[1].val[0]) / 2 ) - 320;
+      double offset = ( (coords[0].val[0] + coords[1].val[0]) / 2 ) - 160;
       VisionTarget.setAngle(new Double(offset).intValue());
 
       double spacing = Math.abs(coords[0].val[0] - coords[1].val[0]);
