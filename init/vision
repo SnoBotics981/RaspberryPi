@@ -1,0 +1,36 @@
+#! /bin/sh
+# /etc/init.d/vision
+
+### BEGIN INIT INFO
+# Provides:          vision
+# Required-Start:    avahi-daemon
+# Required-Stop:     avahi-daemon
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Wrapper script to launch the vision software
+# Description:       The vision software should be built before booting (or
+#                    starting the daemon).
+### END INIT INFO
+
+# If you want a command to always run, put it here
+
+# Carry out specific functions when asked to by the system
+case "$1" in
+  start)
+    echo "Starting robot vision software"
+    cd /home/pi/RaspberryPi/output
+    chmod +x runCameraVision
+    ./runCameraVision > vision.log 2>vision.err &
+    ;;
+  stop)
+    echo "Stopping robot vision software"
+    # TODO: use proper pid-file to cleanly stop the vision processor
+    kill -9 $(ps -efa | grep Camera | grep java | tr -s ' ' | cut -d' ' -f2)
+    ;;
+  *)
+    echo "Usage: /etc/init.d/vision {start|stop}"
+    exit 1
+    ;;
+esac
+
+exit 0
