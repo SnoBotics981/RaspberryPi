@@ -18,7 +18,7 @@ public class FileServer extends HttpServlet {
   public void doGet(HttpServletRequest  request,
                     HttpServletResponse response) throws IOException {
 
-    String requestedFile = request.getPathInfo();
+    String requestedFile = request.getRequestURI();
 
     // Basic 404 error if the path cannot be parsed
     if (requestedFile == null) {
