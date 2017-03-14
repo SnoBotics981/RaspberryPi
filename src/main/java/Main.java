@@ -98,13 +98,13 @@ public class Main {
     UsbCamera camera = setUsbCamera(0, inputStream);
     // Set the resolution for our camera, since this is over USB
     camera.setResolution(320,240);
-    camera.setFPS(20);
+    camera.setFPS(15);
 
     // If the second USB camera is present, run an isolated video feed for the driver
     MjpegServer rvStream = new MjpegServer("Rear-view Server", 1188);
     UsbCamera rearView = setUsbCamera(1, rvStream);
-    rearView.setResolution(320, 240);
-    rearView.setFPS(20);
+    rearView.setResolution(320,240);
+    rearView.setFPS(15);
 
     // This creates a CvSource to use. This will take in a Mat image that has had OpenCV operations
     CvSource imageSource = new CvSource("CV Image Source", VideoMode.PixelFormat.kMJPEG, 640, 480, 30);
