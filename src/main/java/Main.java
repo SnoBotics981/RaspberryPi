@@ -77,7 +77,8 @@ public class Main {
       NetworkTable.setServerMode();
     } else {
       NetworkTable.setClientMode();
-      NetworkTable.setTeam(982);
+      // NetworkTable.setTeam(982);
+      NetworkTable.setTeam(teamNumber);
     }
 
     NetworkTable.initialize();
