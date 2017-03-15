@@ -84,18 +84,13 @@ public class Main {
     NetworkTable.initialize();
     data = NetworkTable.getTable("navigation");
 
-    // This is the network port you want to stream the raw received image to
-    // By rules, this has to be between 1180 and 1190, so 1185 is a good choice
-    int streamPort = 1185;
-
     /******************************************************
      * Configure USB Camera (device links are /dev/video#)
      *
-     * Standardizing on 640x480 as the video resolution
+     * Standardizing on 320x240 as the video resolution
      ******************************************************/
 
-    MjpegServer inputStream = new MjpegServer("MJPEG Server", streamPort);
-    UsbCamera camera = setUsbCamera(0, inputStream);
+    UsbCamera camera = new UsbCamera("Vision Camera", 0);
     // Set the resolution for our camera, since this is over USB
     camera.setResolution(320,240);
     camera.setFPS(15);
