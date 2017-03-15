@@ -107,11 +107,11 @@ public class Main {
     rearView.setFPS(15);
 
     // This creates a CvSource to use. This will take in a Mat image that has had OpenCV operations
-    CvSource imageSource = new CvSource("CV Image Source", VideoMode.PixelFormat.kMJPEG, 640, 480, 30);
+    CvSource imageSource = new CvSource("CV Image Source", VideoMode.PixelFormat.kMJPEG, 320, 240, 15);
     MjpegServer cvStream = new MjpegServer("CV Image Stream", 1186);
     cvStream.setSource(imageSource);
 
-    CvSource rawVideoFeed = new CvSource("Unprocessed Video Feed", VideoMode.PixelFormat.kMJPEG, 640, 480, 30);
+    CvSource rawVideoFeed = new CvSource("Unprocessed Video Feed", VideoMode.PixelFormat.kMJPEG, 320, 240, 15);
     MjpegServer rawView   = new MjpegServer("CV Image Stream", 1187);
     rawView.setSource(rawVideoFeed);
 
