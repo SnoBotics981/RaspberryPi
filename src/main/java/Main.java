@@ -186,8 +186,9 @@ public class Main {
 
       // The light ring is green, but the reflected color is kinda bluish
       Core.inRange(hsv.clone(), new Scalar(50, 8, 200), new Scalar(180, 230, 255), hsv);
-      Imgproc.findContours(hsv.clone(), targets, targetHierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+      Imgproc.findContours(hsv.clone(), targets, targetHierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
+      int targetCount = 0;
       for(MatOfPoint target : targets) {
         polygon = Imgproc.moments(target);
         center.x = polygon.get_m10() / polygon.get_m00();
@@ -196,6 +197,7 @@ public class Main {
         int debugSize = new Double(Math.sqrt(size)).intValue();
         // The colorFilter mat only accepts black or white coloring
         if (size < 50.0) continue;
+	++targetCount;
         if (size >= coords[0].val[2]) {
           coords[1].set(coords[0].val);
           coords[0].set(new double[]{center.x, center.y, size});
@@ -213,9 +215,14 @@ public class Main {
       double offset = ( (coords[0].val[0] + coords[1].val[0]) / 2 ) - 160;
       VisionTarget.setAngle(new Double(offset).intValue());
 
-      double spacing = Math.abs(coords[0].val[0] - coords[1].val[0]);
-      double targetArea = coords[0].val[2] + coords[1].val[2];
-      double closeness = Math.sqrt(spacing * targetArea);
+      double closeness = -1;
+      // The vision filter should only match a couple of spots, so if the count
+      // is unreasonable we don't have a real target
+      if (targetCount > 0 && targetCount <= 5) {
+        double spacing = Math.abs(coords[0].val[0] - coords[1].val[0]);
+        double targetArea = coords[0].val[2] + coords[1].val[2];
+        closeness = Math.sqrt(spacing * targetArea);
+      }
       VisionTarget.setCloseness(new Double(closeness).intValue());
 
       data.putNumber("angle", new Double(offset).intValue());
