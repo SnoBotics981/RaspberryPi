@@ -12,6 +12,19 @@
 #                    starting the daemon).
 ### END INIT INFO
 
+### INSTALL PROCESS ###
+#1) Copy this script to /etc/init.d/vision
+#2) Reload service with 'sudo systemctl daemon-reload'
+#3) Enable the service with 'sudo systemctl enable vision'
+#4) Launch service with 'sudo systemctl start vision'
+
+# Verify the status of the service with 'systemctl status vision'
+
+### REBUILD/UPGRADE ###
+#1) Build new code with './gradlew build'
+#2) Relaunch service with 'sudo systemctl restart vision'
+
+
 # If you want a command to always run, put it here
 
 # Carry out specific functions when asked to by the system
