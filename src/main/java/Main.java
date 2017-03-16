@@ -11,6 +11,7 @@ import org.opencv.core.Size;
 import org.opencv.core.MatOfPoint;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
+import org.opencv.videoio.VideoWriter;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -96,15 +97,17 @@ public class Main {
     camera.setFPS(15);
 
     // If the second USB camera is present, run an isolated video feed for the driver
+    // Note that this is the "Front" camera per physical layout
     MjpegServer rvStream = new MjpegServer("Rear-view Server", 1188);
     UsbCamera rearView = setUsbCamera(1, rvStream);
     rearView.setResolution(320,240);
     rearView.setFPS(15);
 
-    // This creates a CvSource to use. This will take in a Mat image that has had OpenCV operations
+    // This image feed displays the debug log (whatever the filters computed)
     CvSource imageSource = new CvSource("CV Image Source", VideoMode.PixelFormat.kMJPEG, 320, 240, 15);
     MjpegServer cvStream = new MjpegServer("CV Image Stream", 1186);
     cvStream.setSource(imageSource);
+    VideoWriter logDebugStream = new VideoWriter("debugLog.mpg", VideoWriter.fourcc('M','P','4','V'), 15.0, new Size(320, 240), true);
 
     CvSource rawVideoFeed = new CvSource("Unprocessed Video Feed", VideoMode.PixelFormat.kMJPEG, 320, 240, 15);
     MjpegServer rawView   = new MjpegServer("CV Image Stream", 1187);
