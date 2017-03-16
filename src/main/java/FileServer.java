@@ -12,13 +12,14 @@ public class FileServer extends HttpServlet {
 
   private static final long serialVersionUID = 1L;
   // Make this customizable
-  private String basePath = "./static";
+  private String basePath = "../static";
 
   @Override
   public void doGet(HttpServletRequest  request,
                     HttpServletResponse response) throws IOException {
 
     String requestedFile = request.getRequestURI();
+    System.out.println("URI: " + requestedFile);
 
     // Basic 404 error if the path cannot be parsed
     if (requestedFile == null) {
@@ -28,6 +29,7 @@ public class FileServer extends HttpServlet {
 
     // URL-decode the file name (might contain spaces and on) and prepare file object.
     File page = new File(basePath, URLDecoder.decode(requestedFile, "UTF-8"));
+    System.out.println("File: " + page.toString());
     // 404 error if the source is missing
     if (!page.exists()) {
       response.sendError(HttpServletResponse.SC_NOT_FOUND);
