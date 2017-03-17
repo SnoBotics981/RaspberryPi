@@ -24,16 +24,16 @@ public class TestCaptureVideo {
     assumeTrue("Server not detected, skipping test", data.isConnected());
 
     try {
-    Process getLocalhost = Runtime.getRuntime().exec(new String[]{"hostname"});
-    getLocalhost.waitFor();
+      Process getLocalhost = Runtime.getRuntime().exec(new String[]{"hostname"});
+      getLocalhost.waitFor();
 
-    BufferedReader readOutput = new BufferedReader(
-      new InputStreamReader(getLocalhost.getInputStream()));
-    String hostname = readOutput.readLine();
-    assumeNotNull("Unable to evaluate hostname, skipping test", hostname);
-    assumeTrue(
-      "Test is not running on the Raspberry Pi, skipping test",
-      hostname.equals("raspberrypi"));
+      BufferedReader readOutput = new BufferedReader(
+        new InputStreamReader(getLocalhost.getInputStream()));
+      String hostname = readOutput.readLine();
+      assumeNotNull("Unable to evaluate hostname, skipping test", hostname);
+      assumeTrue(
+        "Test is not running on the Raspberry Pi, skipping test",
+        hostname.equals("raspberrypi"));
     } catch(IOException | InterruptedException  e) {
       System.out.println("Exception while scanning hostname");
       e.printStackTrace();
