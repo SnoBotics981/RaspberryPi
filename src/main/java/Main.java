@@ -98,12 +98,15 @@ public class Main {
 
     // If the second USB camera is present, run an isolated video feed for the driver
     // Note that this is the "Front" camera per physical layout
+/*
     MjpegServer rvStream = new MjpegServer("Rear-view Server", 1188);
     UsbCamera rearView = setUsbCamera(1, rvStream);
     rearView.setResolution(320,240);
     rearView.setFPS(15);
+*/
 
     // This image feed displays the debug log (whatever the filters computed)
+/*
     CvSource imageSource = new CvSource("CV Image Source", VideoMode.PixelFormat.kMJPEG, 320, 240, 15);
     MjpegServer cvStream = new MjpegServer("CV Image Stream", 1186);
     cvStream.setSource(imageSource);
@@ -112,6 +115,7 @@ public class Main {
     CvSource rawVideoFeed = new CvSource("Unprocessed Video Feed", VideoMode.PixelFormat.kMJPEG, 320, 240, 15);
     MjpegServer rawView   = new MjpegServer("CV Image Stream", 1187);
     rawView.setSource(rawVideoFeed);
+*/
 
     // This creates a CvSink for us to use. This grabs images from our selected camera,
     // and will allow us to use those images in OpenCV.  To toggle processing
@@ -139,12 +143,12 @@ public class Main {
       long frameTime = imageSink.grabFrame(inputImage);
       if (frameTime == 0) continue;
 
-      findTargets(inputImage.clone(), imageSource);
+      findTargets(inputImage.clone()/*, imageSource*/);
 
       // Display the raw camera feed in a separate filter
       Imgproc.line(inputImage, new Point(100,20), new Point(100,220), new Scalar(0, 255, 0), 7);
       Imgproc.line(inputImage, new Point(220,20), new Point(220,220), new Scalar(0, 255, 0), 7);
-      rawVideoFeed.putFrame(inputImage);
+//      rawVideoFeed.putFrame(inputImage);
       inputImage.release();
       System.gc();
     }
@@ -176,7 +180,7 @@ public class Main {
     coords[1] = new Scalar(0, 0, 0);
   }
 
-  private static void findTargets(Mat frame, CvSource outStream) {
+  private static void findTargets(Mat frame/*, CvSource outStream*/) {
       // Below is where you would do your OpenCV operations on the provided image
       // The sample below just changes color source to HSV
       Imgproc.cvtColor(frame, hsv, Imgproc.COLOR_BGR2HSV);
@@ -237,7 +241,7 @@ public class Main {
       targets.clear();
 
       // Stream the filtered/processed data to the first source (for debugging the target detection)
-      outStream.putFrame(hsv);
+//      outStream.putFrame(hsv);
 
       // OpenCV needs help with memory management
       hsv.release();
