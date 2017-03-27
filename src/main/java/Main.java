@@ -231,7 +231,7 @@ public class Main {
       if (targetCount > 0 && targetCount <= 5) {
         double spacing = Math.abs(coords[0].val[0] - coords[1].val[0]);
         double targetArea = coords[0].val[2] + coords[1].val[2];
-        closeness = Math.sqrt(spacing * targetArea);
+        closeness = Math.cbrt(spacing * targetArea);
         range = filteredDistance = (filteredDistance + closeness) / 2;
       }
 
