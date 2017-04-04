@@ -111,11 +111,12 @@ public class Main {
     MjpegServer cvStream = new MjpegServer("CV Image Stream", 1186);
     cvStream.setSource(imageSource);
     VideoWriter logDebugStream = new VideoWriter("debugLog.mpg", VideoWriter.fourcc('M','P','4','V'), 15.0, new Size(320, 240), true);
+*/
 
-    CvSource rawVideoFeed = new CvSource("Unprocessed Video Feed", VideoMode.PixelFormat.kMJPEG, 320, 240, 15);
+    CvSource rawVideoFeed = new CvSource("Unprocessed Video Feed", VideoMode.PixelFormat.kMJPEG, 320, 240, 1);
     MjpegServer rawView   = new MjpegServer("CV Image Stream", 1187);
     rawView.setSource(rawVideoFeed);
-*/
+
 
     // This creates a CvSink for us to use. This grabs images from our selected camera,
     // and will allow us to use those images in OpenCV.  To toggle processing
@@ -134,6 +135,8 @@ public class Main {
     System.out.println("Server ready, starting the camera feeds");
     VisionTarget.setAngle(23);
 
+    int frameCount = 0;
+
     // Infinitely process camera feeds
     while (true) {
       // Allow the robot/dashboard/other to select a camera for vision processing
@@ -145,9 +148,13 @@ public class Main {
 
       findTargets(inputImage.clone()/*, imageSource*/);
 
+      if (++frameCount >= 15) {
+        rawVideoFeed.putFrame(inputImage);
+        frameCount = 0;
+      }
       // Display the raw camera feed in a separate filter
-      Imgproc.line(inputImage, new Point(100,20), new Point(100,220), new Scalar(0, 255, 0), 7);
-      Imgproc.line(inputImage, new Point(220,20), new Point(220,220), new Scalar(0, 255, 0), 7);
+//      Imgproc.line(inputImage, new Point(100,20), new Point(100,220), new Scalar(0, 255, 0), 7);
+//      Imgproc.line(inputImage, new Point(220,20), new Point(220,220), new Scalar(0, 255, 0), 7);
 //      rawVideoFeed.putFrame(inputImage);
       inputImage.release();
       System.gc();
