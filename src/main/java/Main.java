@@ -78,7 +78,6 @@ public class Main {
       NetworkTable.setServerMode();
     } else {
       NetworkTable.setClientMode();
-      // NetworkTable.setTeam(982);
       NetworkTable.setTeam(teamNumber);
     }
 
@@ -128,6 +127,7 @@ public class Main {
     // Embed a Jetty server for non-video content
     new HttpManager().runServer();
     System.out.println("Server ready, starting the camera feeds");
+    // Debug sample - force the angle to non-zero while testing the servlet
     VisionTarget.setAngle(23);
 
     // Infinitely process camera feeds
@@ -166,6 +166,8 @@ public class Main {
   private static Point center;
   private static Scalar[] coords = new Scalar[2];
   private static NetworkTable data;
+  private static double filteredAngle = 0;
+  private static double filteredDistance = 0;
 
   private static void initMats() {
     hsv = new Mat();
@@ -216,20 +218,23 @@ public class Main {
       Imgproc.circle(hsv, new Point(coords[1].val[0], coords[1].val[1]), coordSize, new Scalar(255, 255, 255), 3);
 
       double offset = ( (coords[0].val[0] + coords[1].val[0]) / 2 ) - 160;
-      VisionTarget.setAngle(new Double(offset).intValue());
+      filteredAngle = (filteredAngle + offset) / 2;
 
       double closeness = -1;
+      double range = -1;
       // The vision filter should only match a couple of spots, so if the count
       // is unreasonable we don't have a real target
       if (targetCount > 0 && targetCount <= 5) {
         double spacing = Math.abs(coords[0].val[0] - coords[1].val[0]);
         double targetArea = coords[0].val[2] + coords[1].val[2];
-        closeness = Math.sqrt(spacing * targetArea);
+        closeness = Math.cbrt(spacing * targetArea);
+	range = filteredDistance = (filteredDistance + closeness) / 2;
       }
-      VisionTarget.setCloseness(new Double(closeness).intValue());
+      VisionTarget.setAngle(new Double(filteredAngle).intValue());
+      VisionTarget.setCloseness(new Double(range).intValue());
 
-      data.putNumber("angle", new Double(offset).intValue());
-      data.putNumber("closeness", new Double(closeness).intValue());
+      data.putNumber("angle", new Double(filteredAngle).intValue());
+      data.putNumber("closeness", new Double(range).intValue());
 
       // Reseet target detectors after each frame
       coords[0].set(new double[]{0, 0, 0});
