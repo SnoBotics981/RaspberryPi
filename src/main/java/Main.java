@@ -27,49 +27,12 @@ public class Main {
     // Loads our OpenCV library. This MUST be included
     System.loadLibrary("opencv_java310");
 
-    // Testing network autoconfigure options
-    Enumeration<NetworkInterface> interfaces = null;
-    try {
-      interfaces = NetworkInterface.getNetworkInterfaces();
-    } catch (SocketException e) {
-      System.out.println("SocketException error when attempting to load network devices");
-      e.printStackTrace();
-      return;
-    }
+    // NetworkManager handles boilerplate code to detect the runtime environment
+    NetworkManager scanner = new NetworkManager();
 
-    if (interfaces != null) {
-      while ( interfaces.hasMoreElements() ) {
-        NetworkInterface i = interfaces.nextElement();
-        Enumeration<InetAddress> addresses = i.getInetAddresses();
-        while ( addresses.hasMoreElements() ) {
-          InetAddress address = addresses.nextElement();
-          if (!address.isLoopbackAddress() && address.isSiteLocalAddress()) {
-            System.out.println("Network address: " + address.getHostAddress());
-          }
-        }
-      }
-    }
+    scanner.scanInterfaces();
 
-    int teamNumber = 0;
-    try {
-      System.out.println("Use avahi to detect the configured team address");
-      Process findTeamNumber = Runtime.getRuntime().exec(new String[]{
-        "bash","-c","avahi-browse -larpt | grep \"=;eth0;IPv4\" | grep \";Workstation;\""
-      });
-      findTeamNumber.waitFor();
-      BufferedReader data = new BufferedReader(
-        new InputStreamReader(findTeamNumber.getInputStream()));
-      String line;
-      while((line = data.readLine()) != null) {
-	String hostname = line.split(";")[6];
-	String avahiID = hostname.split("-")[1];
-	teamNumber = Integer.parseInt(avahiID);
-      }
-      data.close();
-    } catch (IOException | InterruptedException e) {
-      System.out.println("Exception while scanning robot network");
-      e.printStackTrace();
-    }
+    int teamNumber = scanner.getTeamNumber();
     System.out.println("Team number detected: " + teamNumber);
 
     // If the teamNumber code detects the roboRIO, connect using the computed team number
