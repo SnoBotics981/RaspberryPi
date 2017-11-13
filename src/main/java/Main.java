@@ -22,6 +22,8 @@ import java.util.Enumeration;
 import java.util.List;
 
 public class Main {
+  private static VisionProcessor vision;
+  private static NetworkTable data;
 
   public static void main(String[] args) {
     // Loads our OpenCV library. This MUST be included
@@ -85,7 +87,7 @@ public class Main {
     // as they are expensive to create
     Mat inputImage = new Mat();   // Get frame from camera
 //    Mat sharpen = new Mat();      // Sharpen an image using GaussianBlur
-    initMats();
+    vision = new VisionProcessor();
 
     // Embed a Jetty server for non-video content
     new HttpManager().runServer();
@@ -102,7 +104,7 @@ public class Main {
       long frameTime = imageSink.grabFrame(inputImage);
       if (frameTime == 0) continue;
 
-      findTargets(inputImage.clone(), imageSource);
+      vision.findTargets(inputImage.clone(), imageSource);
 
       // Display the raw camera feed in a separate filter
       Imgproc.line(inputImage, new Point(100,20), new Point(100,220), new Scalar(0, 255, 0), 7);
@@ -122,93 +124,4 @@ public class Main {
     return camera;
   }
 
-  private static Mat hsv;             // Convert frame to HSV
-  private static List<MatOfPoint> targets; // findContours() returns a list of shapes
-  private static Mat targetHierarchy; // OpenCV generates a heirchical sorting of targets
-  private static Moments polygon;
-  private static Point center;
-  private static Scalar[] coords = new Scalar[2];
-  private static NetworkTable data;
-  private static double filteredAngle = 0;
-  private static double filteredDistance = 0;
-
-  private static void initMats() {
-    hsv = new Mat();
-    targets = new ArrayList<MatOfPoint>();
-    targetHierarchy = new Mat();
-    center = new Point();
-    coords[0] = new Scalar(0, 0, 0);
-    coords[1] = new Scalar(0, 0, 0);
-  }
-
-  private static void findTargets(Mat frame, CvSource outStream) {
-      // Below is where you would do your OpenCV operations on the provided image
-      // The sample below just changes color source to HSV
-      Imgproc.cvtColor(frame, hsv, Imgproc.COLOR_BGR2HSV);
-      Imgproc.blur(hsv.clone(), hsv, new Size(27,27));
-
-      // Sharpen the image before processing it
-      // Disabling this for now because it seems to make the streams unstable
-//      Imgproc.GaussianBlur(hsv, sharpen, new Size(0, 0), 3);
-//      Core.addWeighted(hsv.clone(), 1.5, sharpen, -0.5, 0, hsv);
-
-      // The light ring is green, but the reflected color is kinda bluish
-      Core.inRange(hsv.clone(), new Scalar(50, 8, 200), new Scalar(180, 230, 255), hsv);
-      Imgproc.findContours(hsv.clone(), targets, targetHierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-
-      int targetCount = 0;
-      for(MatOfPoint target : targets) {
-        polygon = Imgproc.moments(target);
-        center.x = polygon.get_m10() / polygon.get_m00();
-        center.y = polygon.get_m01() / polygon.get_m00();
-        double size = Imgproc.contourArea(target);
-        int debugSize = new Double(Math.sqrt(size)).intValue();
-        // The colorFilter mat only accepts black or white coloring
-        if (size < 50.0) continue;
-	++targetCount;
-        if (size >= coords[0].val[2]) {
-          coords[1].set(coords[0].val);
-          coords[0].set(new double[]{center.x, center.y, size});
-        } else {
-          if (size >= coords[1].val[2]) {
-            coords[1].set(new double[]{center.x, center.y, size});
-          }
-        }
-      }
-      int coordSize = new Double(Math.sqrt(coords[0].val[2])).intValue();
-      Imgproc.circle(hsv, new Point(coords[0].val[0], coords[0].val[1]), coordSize, new Scalar(255, 255, 255), 3);
-      coordSize = new Double(Math.sqrt(coords[1].val[2])).intValue();
-      Imgproc.circle(hsv, new Point(coords[1].val[0], coords[1].val[1]), coordSize, new Scalar(255, 255, 255), 3);
-
-      double offset = ( (coords[0].val[0] + coords[1].val[0]) / 2 ) - 160;
-      filteredAngle = (filteredAngle + offset) / 2;
-
-      double closeness = -1;
-      double range = -1;
-      // The vision filter should only match a couple of spots, so if the count
-      // is unreasonable we don't have a real target
-      if (targetCount > 0 && targetCount <= 5) {
-        double spacing = Math.abs(coords[0].val[0] - coords[1].val[0]);
-        double targetArea = coords[0].val[2] + coords[1].val[2];
-        closeness = Math.cbrt(spacing * targetArea);
-	range = filteredDistance = (filteredDistance + closeness) / 2;
-      }
-      VisionTarget.setAngle(new Double(filteredAngle).intValue());
-      VisionTarget.setCloseness(new Double(range).intValue());
-
-      data.putNumber("angle", new Double(filteredAngle).intValue());
-      data.putNumber("closeness", new Double(range).intValue());
-
-      // Reseet target detectors after each frame
-      coords[0].set(new double[]{0, 0, 0});
-      coords[1].set(new double[]{0, 0, 0});
-      targets.clear();
-
-      // Stream the filtered/processed data to the first source (for debugging the target detection)
-      outStream.putFrame(hsv);
-
-      // OpenCV needs help with memory management
-      hsv.release();
-      frame.release();
-  }
 }
