@@ -20,27 +20,29 @@ public class VisionProcessor {
   // OpenCV generates a heirchical sorting of targets
   private Mat targetHierarchy = new Mat();
   private NetworkTable data;
-  private Scalar[] coords = new Scalar[2];
+  private Circle[] coords = new Circle[2];
   private double filteredAngle = 0;
   private double filteredDistance = 0;
 
   public VisionProcessor() {
-    coords[0] = Color.BLACK.scalar;
-    coords[1] = Color.BLACK.scalar;
+    coords[0] = new Circle();
+    coords[1] = new Circle();
     data = NetworkTable.getTable("navigation");
   }
 
+  // Some method use BGR colorspace, others use HSV colorspace
   public enum Color {
     WHITE(255, 255, 255), BLACK(0, 0, 0);
     public final Scalar scalar;
 
-    private Color(int R, int G, int B) {
-      scalar = new Scalar(R, G, B);
+    private Color(int B, int G, int R) {
+      scalar = new Scalar(B, G, R);
     }
   }
 
   public void findTargets(Mat frame, CvSource outStream) {
-    Imgproc.cvtColor(frame, hsv, Imgproc.COLOR_BGR2HSV);
+    Mat inputFrame = frame.clone();
+    Imgproc.cvtColor(inputFrame, hsv, Imgproc.COLOR_BGR2HSV);
     Imgproc.blur(hsv.clone(), hsv, new Size(27,27));
 
     // Sharpen the image before processing it
@@ -62,21 +64,21 @@ public class VisionProcessor {
       // The colorFilter mat only accepts black or white coloring
       if (size < 50.0) continue;
       ++targetCount;
-      if (size >= coords[0].val[2]) {
-        coords[1].set(coords[0].val);
-        coords[0].set(new double[]{center.x, center.y, size});
+      if (size >= coords[0].getSize()) {
+        coords[1].reset(coords[0]);
+        coords[0].reset(center.x, center.y, size);
       } else {
-        if (size >= coords[1].val[2]) {
-          coords[1].set(new double[]{center.x, center.y, size});
+        if (size >= coords[1].getSize()) {
+          coords[1].reset(center.x, center.y, size);
         }
       }
     }
-    int coordSize = new Double(Math.sqrt(coords[0].val[2])).intValue();
-    Imgproc.circle(hsv, new Point(coords[0].val[0], coords[0].val[1]), coordSize, Color.WHITE.scalar, 3);
-    coordSize = new Double(Math.sqrt(coords[1].val[2])).intValue();
-    Imgproc.circle(hsv, new Point(coords[1].val[0], coords[1].val[1]), coordSize, Color.WHITE.scalar, 3);
+    int coordSize = coords[0].getRadius();
+    Imgproc.circle(hsv, coords[0].getPoint(), coordSize, Color.WHITE.scalar, 3);
+    coordSize = coords[1].getRadius();
+    Imgproc.circle(hsv, coords[1].getPoint(), coordSize, Color.WHITE.scalar, 3);
 
-    double offset = ( (coords[0].val[0] + coords[1].val[0]) / 2 ) - 160;
+    double offset = ( (coords[0].getX() + coords[1].getX()) / 2 ) - 160;
     filteredAngle = (filteredAngle + offset) / 2;
 
     double closeness = -1;
@@ -84,8 +86,8 @@ public class VisionProcessor {
     // The vision filter should only match a couple of spots, so if the count
     // is unreasonable we don't have a real target
     if (targetCount > 0 && targetCount <= 5) {
-      double spacing = Math.abs(coords[0].val[0] - coords[1].val[0]);
-      double targetArea = coords[0].val[2] + coords[1].val[2];
+      double spacing = Math.abs(coords[0].getX() - coords[1].getX());
+      double targetArea = coords[0].getSize() + coords[1].getSize();
       closeness = Math.cbrt(spacing * targetArea);
       range = filteredDistance = (filteredDistance + closeness) / 2;
     }
@@ -96,8 +98,8 @@ public class VisionProcessor {
     data.putNumber("closeness", new Double(range).intValue());
 
     // Reseet target detectors after each frame
-    coords[0].set(new double[]{0, 0, 0});
-    coords[1].set(new double[]{0, 0, 0});
+    coords[0].reset();
+    coords[1].reset();
     targets.clear();
 
     // Stream the filtered/processed data to the first source (for debugging the target detection)
@@ -105,6 +107,6 @@ public class VisionProcessor {
 
     // OpenCV needs help with memory management
     hsv.release();
-    frame.release();
+    inputFrame.release();
   }
 }

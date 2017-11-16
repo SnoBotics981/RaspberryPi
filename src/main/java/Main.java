@@ -104,7 +104,7 @@ public class Main {
       long frameTime = imageSink.grabFrame(inputImage);
       if (frameTime == 0) continue;
 
-      vision.findTargets(inputImage.clone(), imageSource);
+      vision.findTargets(inputImage, imageSource);
 
       // Display the raw camera feed in a separate filter
       Imgproc.line(inputImage, new Point(100,20), new Point(100,220), new Scalar(0, 255, 0), 7);
