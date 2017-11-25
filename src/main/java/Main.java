@@ -1,25 +1,13 @@
-import java.util.ArrayList;
-
 import edu.wpi.first.wpilibj.networktables.*;
 import edu.wpi.first.wpilibj.tables.*;
 import edu.wpi.cscore.*;
 import org.opencv.core.Mat;
-import org.opencv.core.Core;
 import org.opencv.core.Scalar;
 import org.opencv.core.Point;
 import org.opencv.core.Size;
 import org.opencv.core.MatOfPoint;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.imgproc.Moments;
 import org.opencv.videoio.VideoWriter;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.IOException;
-import java.util.Enumeration;
-import java.util.List;
 
 public class Main {
   private static VisionProcessor vision;
