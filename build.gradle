@@ -40,6 +40,7 @@ dependencies {
   compile 'org.eclipse.jetty:jetty-server:+'
   compile 'org.eclipse.jetty:jetty-servlet:+'
   compile 'commons-io:commons-io:+'
+  compile 'org.json:json:+'
   testCompile 'junit:junit:4.12'
 }
 

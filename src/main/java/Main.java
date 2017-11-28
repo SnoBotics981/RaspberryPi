@@ -35,6 +35,9 @@ public class Main {
     }
 
     NetworkTable.initialize();
+    Config.initialize();
+    int frameRate = Config.VIDEO_RATE.intValue();
+    System.out.println("Framerate from config: " + frameRate);
     data = NetworkTable.getTable("navigation");
 
     /******************************************************
@@ -46,14 +49,14 @@ public class Main {
     UsbCamera camera = new UsbCamera("Vision Camera", 0);
     // Set the resolution for our camera, since this is over USB
     camera.setResolution(320,240);
-    camera.setFPS(15);
+    camera.setFPS(frameRate);
 
     // If the second USB camera is present, run an isolated video feed for the driver
     // Note that this is the "Front" camera per physical layout
     MjpegServer rvStream = new MjpegServer("Rear-view Server", 1188);
     UsbCamera rearView = setUsbCamera(1, rvStream);
     rearView.setResolution(320,240);
-    rearView.setFPS(15);
+    rearView.setFPS(frameRate);
 
     // This image feed displays the debug log (whatever the filters computed)
     CvSource imageSource = new CvSource("CV Image Source", VideoMode.PixelFormat.kMJPEG, 320, 240, 15);
