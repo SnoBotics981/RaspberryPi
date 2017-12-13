@@ -1,6 +1,7 @@
 import java.io.File;
 import java.util.Map;
 import java.util.HashMap;
+import net.engio.mbassy.bus.MBassador;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 
@@ -12,9 +13,9 @@ public enum Config {
   public final String id;
   private String value;
 
+  public static final MBassador bus = new MBassador();
   private static File configFile = new File("./config.json");
   private static JSONObject config = new JSONObject();
-  private static boolean dirty = false;
 
   Config(String id, String value) {
     this.id = id;
@@ -27,9 +28,14 @@ public enum Config {
 
   public void update(String newValue) {
     // Might not really care about this, unless the file gets large
-    if (!this.value.equals(newValue)) { dirty = true; }
+    System.out.println("Updating value of '" + this.id + "' to '" + newValue + "'");
+    if (this.value.equals(newValue)) {
+      System.out.println("No change, skipping update activity");
+      return;
+    }
     this.value = newValue;
     config.put(this.id, this.value);
+    bus.publish(this);
   }
 
   public static Config find(String id) {
@@ -54,7 +60,6 @@ public enum Config {
     // If the element is missing from the JSON, add it in
     for(Config elem : values()) {
       String newValue = config.optString(elem.id, elem.value);
-      if (!config.has(elem.id)) dirty = true;
         elem.update(newValue);
     }
 
@@ -66,7 +71,6 @@ public enum Config {
   public static void saveConfig() {
     try {
       FileUtils.writeStringToFile(configFile, config.toString(), "utf-8");
-      dirty = false;
     } catch (Exception e) {
       System.out.println("Error detected: " + e.toString());
     }

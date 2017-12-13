@@ -5,6 +5,7 @@ plugins {
 
 apply plugin: 'java'
 apply plugin: 'application'
+apply plugin: 'war'
 
 
 // This is where you select which operating system to build for.
@@ -41,6 +42,10 @@ dependencies {
   compile 'org.eclipse.jetty:jetty-servlet:+'
   compile 'commons-io:commons-io:+'
   compile 'org.json:json:+'
+  compile 'net.engio:mbassador:+'
+  providedCompile 'javax.el:javax.el-api:+'
+  runtime 'de.odysseus.juel:juel-impl:+'
+  runtime 'de.odysseus.juel:juel-spi:+'
   testCompile 'junit:junit:4.12'
 }
 

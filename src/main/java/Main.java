@@ -1,6 +1,7 @@
 import edu.wpi.first.wpilibj.networktables.*;
 import edu.wpi.first.wpilibj.tables.*;
 import edu.wpi.cscore.*;
+import net.engio.mbassy.listener.Handler;
 import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
 import org.opencv.core.Point;
@@ -46,10 +47,7 @@ public class Main {
      * Standardizing on 320x240 as the video resolution
      ******************************************************/
 
-    UsbCamera camera = new UsbCamera("Vision Camera", 0);
-    // Set the resolution for our camera, since this is over USB
-    camera.setResolution(320,240);
-    camera.setFPS(frameRate);
+    UsbCameraManager camera = new UsbCameraManager("Vision Camera", 0);
 
     // If the second USB camera is present, run an isolated video feed for the driver
     // Note that this is the "Front" camera per physical layout
@@ -62,7 +60,8 @@ public class Main {
     CvSource imageSource = new CvSource("CV Image Source", VideoMode.PixelFormat.kMJPEG, 320, 240, 15);
     MjpegServer cvStream = new MjpegServer("CV Image Stream", 1186);
     cvStream.setSource(imageSource);
-    VideoWriter logDebugStream = new VideoWriter("debugLog.mpg", VideoWriter.fourcc('M','P','4','V'), 15.0, new Size(320, 240), true);
+    VideoWriter logDebugStream = new VideoWriter(
+        "debugLog.mjpeg", VideoWriter.fourcc('M','J','P','G'), 15.0, new Size(320, 240), true);
 
     CvSource rawVideoFeed = new CvSource("Unprocessed Video Feed", VideoMode.PixelFormat.kMJPEG, 320, 240, 15);
     MjpegServer rawView   = new MjpegServer("CV Image Stream", 1187);
@@ -115,4 +114,28 @@ public class Main {
     return camera;
   }
 
+  public static class UsbCameraManager extends UsbCamera {
+    public UsbCameraManager(String label, int device) {
+      super(label, device);
+      this.setResolution(
+          Config.VIDEO_WIDTH.intValue(),
+          Config.VIDEO_HEIGHT.intValue());
+      this.setFPS(Config.VIDEO_RATE.intValue());
+      System.out.println("Subscribe to the configuration bus");
+      Config.bus.subscribe(this);
+    }
+
+    // Generic handler, will process any config event
+    @Handler
+    public void onChange(Config option) {
+      System.out.println("Event handler process change event: " + option.id + "=>" + option.getValue());
+    }
+
+    // Limited handler, will only respond when Config.VIDEO_RATE is modified
+    @Handler(condition = "msg == 'VIDEO_RATE'")
+    public void onVideoRate(Config msg) {
+      System.out.println("Video Rate event detected: '" + msg.getValue() + "'");
+      this.setFPS(msg.intValue());
+    }
+  }
 }
