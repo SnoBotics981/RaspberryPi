@@ -6,12 +6,13 @@ import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 
 public enum Config {
+  // Default values set here, runtime values stored in config.json
   VIDEO_WIDTH ("video.width",  "320"),
   VIDEO_HEIGHT("video.height", "240"),
   VIDEO_RATE  ("video.rate",   "15");
 
   public final String id;
-  private String value;
+  private volatile String value;
 
   public static final MBassador bus = new MBassador();
   private static File configFile = new File("./config.json");
@@ -26,7 +27,7 @@ public enum Config {
 
   public int intValue() { return Integer.parseInt(this.value); }
 
-  public void update(String newValue) {
+  public synchronized void update(String newValue) {
     // Might not really care about this, unless the file gets large
     System.out.println("Updating value of '" + this.id + "' to '" + newValue + "'");
     if (this.value.equals(newValue)) {
@@ -35,6 +36,7 @@ public enum Config {
     }
     this.value = newValue;
     config.put(this.id, this.value);
+    // Mutli-threaded event handlers should use 'bus.publishAsync()' to avoid deadlocks
     bus.publish(this);
   }
 
