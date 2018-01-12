@@ -9,7 +9,9 @@ public enum Config {
   // Default values set here, runtime values stored in config.json
   VIDEO_WIDTH ("video.width",  "320"),
   VIDEO_HEIGHT("video.height", "240"),
-  VIDEO_RATE  ("video.rate",   "15");
+  VIDEO_RATE  ("video.rate",   "15"),
+  // For this approach, the HSV object should split the values separate integers
+  COLOR_TARGET_LOWER ("target.color.lower", "50,8,200");
 
   public final String id;
   private volatile String value;
