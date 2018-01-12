@@ -23,8 +23,8 @@ public class VisionProcessor {
   private Circle[] coords = new Circle[2];
   private double filteredAngle = 0;
   private double filteredDistance = 0;
-  private Color.HSV lowerBound = new Color.HSV(50, 8, 200);
-  private Color.HSV upperBound = new Color.HSV(180, 230, 255);
+  private Color.HSV lowerBound = new Color.HSV(50, 8, 200, Config.COLOR_TARGET_LOWER);
+  private Color.HSV upperBound = new Color.HSV(180, 230, 255, Config.COLOR_TARGET_UPPER);
 
   public VisionProcessor() {
     coords[0] = new Circle();

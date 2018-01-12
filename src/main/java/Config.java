@@ -11,7 +11,8 @@ public enum Config {
   VIDEO_HEIGHT("video.height", "240"),
   VIDEO_RATE  ("video.rate",   "15"),
   // For this approach, the HSV object should split the values separate integers
-  COLOR_TARGET_LOWER ("target.color.lower", "50,8,200");
+  COLOR_TARGET_LOWER ("target.color.lower", "50,8,200"),
+  COLOR_TARGET_UPPER ("target.color.upper", "180,230,255");
 
   public final String id;
   private volatile String value;
@@ -28,6 +29,20 @@ public enum Config {
   public String getValue() { return value; }
 
   public int intValue() { return Integer.parseInt(this.value); }
+
+  public double[] doubleArray(int length) {
+    String[] array = this.value.split(",");
+    System.out.println("Setting to array: " + id + "->" + value);
+    if (array.length != length) {
+      System.out.println("Invalid array length: " + value);
+      return null;
+    }
+    double[] data = new double[array.length];
+    for (int i=0; i<array.length; i++) {
+      data[i] = Double.parseDouble(array[i]);
+    }
+    return data;
+  }
 
   public synchronized void update(String newValue) {
     // Might not really care about this, unless the file gets large
