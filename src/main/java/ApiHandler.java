@@ -33,7 +33,8 @@ public class ApiHandler extends HttpServlet {
       if (null != Config.find(key)) {
         // Operating assumption here is that each key should map to a single
 	// value, stored as a String in the Config enum.
-        Config.find(key).update(values[0]);
+	// If any input fields are left blank, do not change that element
+        if (!values[0].equals("")) Config.find(key).update(values[0]);
       } else {
         System.out.println("Unable to find setting option: " +  key);
       }
