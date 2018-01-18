@@ -23,21 +23,13 @@ public class VisionProcessor {
   private Circle[] coords = new Circle[2];
   private double filteredAngle = 0;
   private double filteredDistance = 0;
+  private Color.HSV lowerBound = new Color.HSV(50, 8, 200, Config.COLOR_TARGET_LOWER);
+  private Color.HSV upperBound = new Color.HSV(180, 230, 255, Config.COLOR_TARGET_UPPER);
 
   public VisionProcessor() {
     coords[0] = new Circle();
     coords[1] = new Circle();
     data = NetworkTable.getTable("navigation");
-  }
-
-  // Some method use BGR colorspace, others use HSV colorspace
-  public enum Color {
-    WHITE(255, 255, 255), BLACK(0, 0, 0);
-    public final Scalar scalar;
-
-    private Color(int B, int G, int R) {
-      scalar = new Scalar(B, G, R);
-    }
   }
 
   public void findTargets(Mat frame, CvSource outStream) {
@@ -51,7 +43,7 @@ public class VisionProcessor {
 //    Core.addWeighted(hsv.clone(), 1.5, sharpen, -0.5, 0, hsv);
 
     // The light ring is green, but the reflected color is kinda bluish
-    Core.inRange(hsv.clone(), new Scalar(50, 8, 200), new Scalar(180, 230, 255), hsv);
+    Core.inRange(hsv.clone(), lowerBound, upperBound, hsv);
     Imgproc.findContours(hsv.clone(), targets, targetHierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
     int targetCount = 0;
@@ -74,9 +66,9 @@ public class VisionProcessor {
       }
     }
     int coordSize = coords[0].getRadius();
-    Imgproc.circle(hsv, coords[0].getPoint(), coordSize, Color.WHITE.scalar, 3);
+    Imgproc.circle(hsv, coords[0].getPoint(), coordSize, Color.BGR.Const.WHITE.color, 3);
     coordSize = coords[1].getRadius();
-    Imgproc.circle(hsv, coords[1].getPoint(), coordSize, Color.WHITE.scalar, 3);
+    Imgproc.circle(hsv, coords[1].getPoint(), coordSize, Color.BGR.Const.WHITE.color, 3);
 
     double offset = ( (coords[0].getX() + coords[1].getX()) / 2 ) - 160;
     filteredAngle = (filteredAngle + offset) / 2;
