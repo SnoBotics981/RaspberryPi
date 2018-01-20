@@ -37,6 +37,12 @@ public class VisionProcessor {
       target.y = polygon.get_m01() / polygon.get_m00();
   }
 
+  public void drawCircle(Mat buffer, Circle target, Color shade, int thickness) {
+    int coordSize = target.getRadius();
+    Point radius = target.getPoint();
+    Imgproc.circle(buffer, radius, coordSize, shade, thickness);
+  }
+
   public void findTargets(Mat frame, CvSource outStream) {
     Mat inputFrame = frame.clone();
     Imgproc.cvtColor(inputFrame, hsv, Imgproc.COLOR_BGR2HSV);
@@ -68,12 +74,10 @@ public class VisionProcessor {
         }
       }
     }
-    int coordSize = coords[0].getRadius();
-    Imgproc.circle(hsv, coords[0].getPoint(), coordSize, Color.Const.WHITE.color, 3);
-    coordSize = coords[1].getRadius();
-    Imgproc.circle(hsv, coords[1].getPoint(), coordSize, Color.Const.WHITE.color, 3);
+    drawCircle(hsv, coords[0], Color.Const.WHITE.color, 3);
+    drawCircle(hsv, coords[1], Color.Const.WHITE.color, 3);
 
-    double offset = ( (coords[0].getX() + coords[1].getX()) / 2 ) - 160;
+    double offset = ( (coords[0].getX() + coords[1].getX()) / 2 ) - (Config.VIDEO_WIDTH / 2);
     filteredAngle = (filteredAngle + offset) / 2;
 
     double closeness = -1;
