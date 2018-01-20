@@ -1,6 +1,6 @@
 import org.opencv.core.Point;
 
-public class Circle {
+public class Circle implements Comparable<Circle> {
   private double x, y, size;
 
   // Default constructor - zero out all values
@@ -23,5 +23,10 @@ public class Circle {
   public double getX() { return x; }
 
   public int getRadius() { return new Double(Math.sqrt(size)).intValue(); }
+
+  @Override
+  public int compareTo(Circle that) {
+    return Double.compare(that.size, this.size);
+  }
 }
 

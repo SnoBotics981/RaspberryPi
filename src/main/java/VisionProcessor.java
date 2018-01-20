@@ -1,5 +1,6 @@
 import edu.wpi.cscore.*;
 import edu.wpi.first.wpilibj.networktables.*;
+import java.util.Collections;
 import java.util.ArrayList;
 import java.util.List;
 import org.opencv.core.Mat;
@@ -19,15 +20,13 @@ public class VisionProcessor {
   // OpenCV generates a heirchical sorting of targets
   private Mat targetHierarchy = new Mat();
   private NetworkTable data;
-  private Circle[] coords = new Circle[2];
+  private List<Circle> coords = new ArrayList<Circle>();
   private double filteredAngle = 0;
   private double filteredDistance = 0;
   private Color lowerBound = new Color(50, 8, 200, Config.COLOR_TARGET_LOWER);
   private Color upperBound = new Color(180, 230, 255, Config.COLOR_TARGET_UPPER);
 
   public VisionProcessor() {
-    coords[0] = new Circle();
-    coords[1] = new Circle();
     data = NetworkTable.getTable("navigation");
   }
 
@@ -65,19 +64,14 @@ public class VisionProcessor {
       // The colorFilter mat only accepts black or white coloring
       if (size < 50.0) continue;
       ++targetCount;
-      if (size >= coords[0].getSize()) {
-        coords[1].reset(coords[0]);
-        coords[0].reset(center.x, center.y, size);
-      } else {
-        if (size >= coords[1].getSize()) {
-          coords[1].reset(center.x, center.y, size);
-        }
-      }
+      coords.add(new Circle(center.x, center.y, size));
     }
-    drawCircle(hsv, coords[0], Color.Const.WHITE.color, 3);
-    drawCircle(hsv, coords[1], Color.Const.WHITE.color, 3);
+    Collections.sort(coords);
+    drawCircle(hsv, coords.get(0), Color.Const.WHITE.color, 3);
+    drawCircle(hsv, coords.get(1), Color.Const.WHITE.color, 3);
 
-    double offset = ( (coords[0].getX() + coords[1].getX()) / 2 ) - (Config.VIDEO_WIDTH / 2);
+    double offset = ( (coords.get(0).getX() + coords.get(1).getX()) / 2 )
+        - (Config.VIDEO_WIDTH.intValue() / 2);
     filteredAngle = (filteredAngle + offset) / 2;
 
     double closeness = -1;
@@ -85,8 +79,8 @@ public class VisionProcessor {
     // The vision filter should only match a couple of spots, so if the count
     // is unreasonable we don't have a real target
     if (targetCount > 0 && targetCount <= 5) {
-      double spacing = Math.abs(coords[0].getX() - coords[1].getX());
-      double targetArea = coords[0].getSize() + coords[1].getSize();
+      double spacing = Math.abs(coords.get(0).getX() - coords.get(1).getX());
+      double targetArea = coords.get(0).getSize() + coords.get(1).getSize();
       closeness = Math.cbrt(spacing * targetArea);
       range = filteredDistance = (filteredDistance + closeness) / 2;
     }
@@ -97,11 +91,10 @@ public class VisionProcessor {
     data.putNumber("closeness", new Double(range).intValue());
 
     // Reseet target detectors after each frame
-    coords[0].reset();
-    coords[1].reset();
+    coords.clear();
     targets.clear();
 
-    // Stream the filtered/processed data to the first source (for debugging the target detection)
+    // Stream the filtered/processed data to the first source (to debug the target detection)
     outStream.putFrame(hsv);
 
     // OpenCV needs help with memory management
