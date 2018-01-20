@@ -12,7 +12,6 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
 
 public class VisionProcessor {
-  private Moments polygon;
   private Point center = new Point();
   // findContours() returns a list of shapes
   private List<MatOfPoint> targets = new ArrayList<MatOfPoint>();
@@ -23,13 +22,19 @@ public class VisionProcessor {
   private Circle[] coords = new Circle[2];
   private double filteredAngle = 0;
   private double filteredDistance = 0;
-  private Color.HSV lowerBound = new Color.HSV(50, 8, 200, Config.COLOR_TARGET_LOWER);
-  private Color.HSV upperBound = new Color.HSV(180, 230, 255, Config.COLOR_TARGET_UPPER);
+  private Color lowerBound = new Color(50, 8, 200, Config.COLOR_TARGET_LOWER);
+  private Color upperBound = new Color(180, 230, 255, Config.COLOR_TARGET_UPPER);
 
   public VisionProcessor() {
     coords[0] = new Circle();
     coords[1] = new Circle();
     data = NetworkTable.getTable("navigation");
+  }
+
+  public void findCenter(MatOfPoint volume, Point target) {
+      Moments polygon = Imgproc.moments(volume);
+      target.x = polygon.get_m10() / polygon.get_m00();
+      target.y = polygon.get_m01() / polygon.get_m00();
   }
 
   public void findTargets(Mat frame, CvSource outStream) {
@@ -48,9 +53,7 @@ public class VisionProcessor {
 
     int targetCount = 0;
     for(MatOfPoint target : targets) {
-      polygon = Imgproc.moments(target);
-      center.x = polygon.get_m10() / polygon.get_m00();
-      center.y = polygon.get_m01() / polygon.get_m00();
+      findCenter(target, center);
       double size = Imgproc.contourArea(target);
       int debugSize = new Double(Math.sqrt(size)).intValue();
       // The colorFilter mat only accepts black or white coloring
@@ -66,9 +69,9 @@ public class VisionProcessor {
       }
     }
     int coordSize = coords[0].getRadius();
-    Imgproc.circle(hsv, coords[0].getPoint(), coordSize, Color.BGR.Const.WHITE.color, 3);
+    Imgproc.circle(hsv, coords[0].getPoint(), coordSize, Color.Const.WHITE.color, 3);
     coordSize = coords[1].getRadius();
-    Imgproc.circle(hsv, coords[1].getPoint(), coordSize, Color.BGR.Const.WHITE.color, 3);
+    Imgproc.circle(hsv, coords[1].getPoint(), coordSize, Color.Const.WHITE.color, 3);
 
     double offset = ( (coords[0].getX() + coords[1].getX()) / 2 ) - 160;
     filteredAngle = (filteredAngle + offset) / 2;

@@ -6,52 +6,39 @@ import net.engio.mbassy.listener.IMessageFilter;
 import net.engio.mbassy.subscription.SubscriptionContext;
 import org.opencv.core.Scalar;
 
-// Some methods use BGR colorspace, others use HSV colorspace
-public class Color {
+public class Color extends Scalar {
   private static List<String> filterTags = new ArrayList<String>();
+  private String filter = "";
 
-  // Use the OpenCV scalar functionality, with a different semantical name
-  public static class HSV extends Scalar {
-    private String filter = "";
-
-    public HSV(int H, int S, int V) {
-      super(H, S, V);
-    }
-
-    public HSV(int H, int S, int V, Config event) {
-      super(H, S, V);
-      if (!filterTags.contains(event)) { filterTags.add(event.id); }
-      filter = event.id;
-      System.out.println("Listen for: '" + filter + "'");
-      Config.bus.subscribe(this);
-    }
-
-    // Conveniency utility when typecasting, not required thus far
-    public Scalar scalar() { return (Scalar)this; }
-
-    // TODO: Add event handler support to respond to config updates
-    @Handler(filters = {@Filter(ColorFilter.class)})
-    public void handleEvents(Config msg) {
-      if (!msg.id.equals(filter)) { return; }
-      System.out.println("Parse/update: " + msg.id);
-      double[] data = msg.doubleArray(3);
-      if (null == data) return;
-      this.set(data);
-    }
+  // Some methods use BGR colorspace, others use HSV colorspace
+  public Color(double A, double B, double C) {
+    super(A, B, C);
   }
 
-  public static class BGR extends Scalar {
-    public BGR(int B, int G, int R) {
-      super(B, G, R);
-    }
+  public Color(double A, double B, double C, Config event) {
+    super(A, B, C);
+    if (!filterTags.contains(event)) { filterTags.add(event.id); }
+    filter = event.id;
+    System.out.println("Listen for: '" + filter + "'");
+    Config.bus.subscribe(this);
+  }
 
-    public enum Const {
-      WHITE(255, 255, 255), BLACK(0, 0, 0);
-      public final BGR color;
+  // TODO: Add event handler support to respond to config updates
+  @Handler(filters = {@Filter(ColorFilter.class)})
+  public void handleEvents(Config msg) {
+    if (!msg.id.equals(filter)) { return; }
+    System.out.println("Parse/update: " + msg.id);
+    double[] data = msg.doubleArray(3);
+    if (null == data) return;
+    this.set(data);
+  }
 
-      private Const(int B, int G, int R) {
-        color = new BGR(B, G, R);
-      }
+  public enum Const {
+    WHITE(255, 255, 255), BLACK(0, 0, 0);
+    public final Color color;
+
+    private Const(double A, double B, double C) {
+      color = new Color(A, B, C);
     }
   }
 
