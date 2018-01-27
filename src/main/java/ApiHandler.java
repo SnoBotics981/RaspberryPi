@@ -23,7 +23,8 @@ public class ApiHandler extends HttpServlet {
     System.out.println("Input parameters: " + request.getParameterMap().size());
 
     switch (request.getPathInfo()) {
-      case "/config": updateSettings(request, response);
+      case "/config": updateSettings(request, response); break;
+      case "/save": saveSettings(request, response); break;
     }
   }
 
@@ -52,6 +53,12 @@ public class ApiHandler extends HttpServlet {
         System.out.println("Unable to find setting option: " +  key);
       }
     }
+    response.sendRedirect("/config");
+  }
+
+  private void saveSettings(HttpServletRequest request,
+                             HttpServletResponse response) throws IOException {
+    Config.saveConfig();
     response.sendRedirect("/config");
   }
 }
