@@ -45,7 +45,12 @@ public class VisionProcessor {
   public void findTargets(Mat frame, CvSource outStream) {
     Mat inputFrame = frame.clone();
     Imgproc.cvtColor(inputFrame, hsv, Imgproc.COLOR_BGR2HSV);
-    Imgproc.blur(hsv.clone(), hsv, new Size(27,27));
+    // Try using gaussian blur to better smoothen out the image
+    Imgproc.GaussianBlur(hsv.clone(), hsv, new Size(5, 5), 0);
+    // Photo.fastNlMeansDenoisingColored is supposed to work better,
+    // but we need a good way to parallelize this code
+//    Photo.fastNlMeansDenoisingColored(hsv.clone(), hsv, 10,10,7,21);
+//    Imgproc.blur(hsv.clone(), hsv, new Size(27,27));
 
     // Sharpen the image before processing it
     // Disabling this for now because it seems to make the streams unstable
@@ -54,9 +59,12 @@ public class VisionProcessor {
 
     // The light ring is green, but the reflected color is kinda bluish
     Core.inRange(hsv.clone(), lowerBound, upperBound, hsv);
-    Imgproc.findContours(hsv.clone(), targets, targetHierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+    Imgproc.findContours(hsv.clone(), targets, targetHierarchy,
+        Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
     int targetCount = 0;
+    // This needs to be set via config value
+    int targetLimit = 2;
     for(MatOfPoint target : targets) {
       findCenter(target, center);
       double size = Imgproc.contourArea(target);
@@ -67,20 +75,32 @@ public class VisionProcessor {
       coords.add(new Circle(center.x, center.y, size));
     }
     Collections.sort(coords);
-    drawCircle(hsv, coords.get(0), Color.Const.WHITE.color, 3);
-    drawCircle(hsv, coords.get(1), Color.Const.WHITE.color, 3);
+    if (coords.size() >= targetLimit) {
+      coords.subList(targetLimit, coords.size()).clear();
+    }
 
-    double offset = ( (coords.get(0).getX() + coords.get(1).getX()) / 2 )
-        - (Config.VIDEO_WIDTH.intValue() / 2);
+    double offset = 0;
+    double targetArea = 0;
+    for(Circle target : coords) {
+      drawCircle(hsv, target, Color.Const.WHITE.color, 3);
+      offset += target.getX();
+      targetArea += target.getSize();
+    }
+    if (coords.size() > 0) {
+      offset /= coords.size();
+    }
+    offset -= Config.VIDEO_WIDTH.intValue() / 2;
     filteredAngle = (filteredAngle + offset) / 2;
 
     double closeness = -1;
     double range = -1;
+    double spacing = 1;
     // The vision filter should only match a couple of spots, so if the count
     // is unreasonable we don't have a real target
-    if (targetCount > 0 && targetCount <= 5) {
-      double spacing = Math.abs(coords.get(0).getX() - coords.get(1).getX());
-      double targetArea = coords.get(0).getSize() + coords.get(1).getSize();
+    if (coords.size() == 2) {
+      spacing = Math.abs(coords.get(0).getX() - coords.get(1).getX());
+    }
+    if (coords.size() > 0 && coords.size() <= 5) {
       closeness = Math.cbrt(spacing * targetArea);
       range = filteredDistance = (filteredDistance + closeness) / 2;
     }
@@ -94,7 +114,7 @@ public class VisionProcessor {
     coords.clear();
     targets.clear();
 
-    // Stream the filtered/processed data to the first source (to debug the target detection)
+    // Stream the processed data to the first source (to debug the target detection)
     outStream.putFrame(hsv);
 
     // OpenCV needs help with memory management
