@@ -13,11 +13,24 @@ public class ApiHandler extends HttpServlet {
   public void doPost(HttpServletRequest request,
                     HttpServletResponse response) throws IOException {
 
-    System.out.println("Running API handler");
+    // TODO: Add support for child paths (alternate API updates)
+    // If path is '/api/*', call the corresponding method
+    // If path is '/api/config', update config settings
+    // If path is '/api/save', save the config settings
+    // If path is '/api/target', switch the active target state
 
+    System.out.println("Running API handler");
     System.out.println("Input parameters: " + request.getParameterMap().size());
 
+    switch (request.getPathInfo()) {
+      case "/config": updateSettings(request, response);
+    }
+  }
+
+  private void updateSettings(HttpServletRequest request,
+                             HttpServletResponse response) throws IOException {
     Enumeration params = request.getParameterNames();
+
     while (params.hasMoreElements()) {
       String key = (String)params.nextElement();
       String[] values = request.getParameterValues(key);
