@@ -1,0 +1,19 @@
+doctype html
+mixin config(keyword, display)
+  label(for=keyword)=display
+  input(type='text' id=keyword name=keyword)
+  if block
+    block
+  p
+html
+  head
+    title='Vision Processing Configuration'
+  body
+    form(action='/api/config' method='post')
+      +config('video.rate', 'Video feed framerate: ')
+        span= Config.VIDEO_RATE
+      +config('target.color.lower', 'Color Filter (lower bound): ')
+        span= Config.COLOR_TARGET_LOWER
+      +config('target.color.upper', 'Color Filter (upper bound): ')
+        span= Config.COLOR_TARGET_UPPER
+      input(type='submit' value='Submit')

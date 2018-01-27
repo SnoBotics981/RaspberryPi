@@ -19,7 +19,7 @@ public class HttpManager {
     router.addServletWithMapping(ApiHandler.class, "/api/*");
     router.addServletWithMapping(FileServer.class, "/debug.html");
     router.addServletWithMapping(FileServer.class, "/dashboard.html");
-    router.addServletWithMapping(FileServer.class, "/config.html");
+    router.addServletWithMapping(JadeServer.class, "/config");
   }
 
   public void runServer() {
