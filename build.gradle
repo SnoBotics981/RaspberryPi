@@ -43,6 +43,7 @@ dependencies {
   compile 'commons-io:commons-io:+'
   compile 'org.json:json:+'
   compile 'net.engio:mbassador:+'
+  compile 'de.neuland-bfi:jade4j:+'
   providedCompile 'javax.el:javax.el-api:+'
   runtime 'de.odysseus.juel:juel-impl:+'
   runtime 'de.odysseus.juel:juel-spi:+'

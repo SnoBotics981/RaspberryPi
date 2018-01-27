@@ -16,4 +16,6 @@ html
         span= Config.COLOR_TARGET_LOWER
       +config('target.color.upper', 'Color Filter (upper bound): ')
         span= Config.COLOR_TARGET_UPPER
-      input(type='submit' value='Submit')
+      input(type='submit' value='Update')
+    form(action='/api/save' method='post')
+      input(type='submit' value='Save Settings')

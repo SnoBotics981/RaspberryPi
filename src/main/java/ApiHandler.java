@@ -52,6 +52,6 @@ public class ApiHandler extends HttpServlet {
         System.out.println("Unable to find setting option: " +  key);
       }
     }
-    response.sendRedirect("/config.html");
+    response.sendRedirect("/config");
   }
 }
