@@ -24,11 +24,16 @@ mainClassName = 'Main'
 // Change the line below to change the name of the output jar
 def projectName = 'CameraVision'
 
-// Shouldn't need to change anything below this point
+def home = System.getProperty("user.home")
+
+// Various tasks defined in the dependencies file
 apply from: 'dependencies.gradle'
 
 repositories {
     mavenCentral()
+    maven {
+      url home + "/releases/maven/development/"
+    }
     maven {
       url "http://first.wpi.edu/FRC/roborio/maven/release"
     }
@@ -44,7 +49,11 @@ dependencies {
   compile 'org.json:json:+'
   compile 'net.engio:mbassador:+'
   compile 'de.neuland-bfi:jade4j:+'
+  compile 'edu.wpi.first.wpilibj:wpilibj-java:+'
+  compile 'edu.wpi.first.wpiutil:wpiutil-java:+'
+  compile 'edu.wpi.first.ntcore:ntcore-java:+'
   providedCompile 'javax.el:javax.el-api:+'
+  runtime 'edu.wpi.first.ntcore:ntcore-jni:+'
   runtime 'de.odysseus.juel:juel-impl:+'
   runtime 'de.odysseus.juel:juel-spi:+'
   testCompile 'junit:junit:4.12'
@@ -67,6 +76,11 @@ distributions {
         exclude '**/MANIFEST.MF'
         into 'bin/'
       }
+      from (ntcoreUnzipLocation) {
+        exclude 'META-INF'
+        exclude '**/MANIFEST.MF'
+	into 'bin/'
+      }
     }
   }
 }
@@ -88,7 +102,7 @@ task writeExecuteScript() {
 
 task copyToOutput(type: Copy) {
   dependsOn shadowJar
-  dependsOn unzipOpenCv
+  dependsOn unzipFiles
   dependsOn writeExecuteScript
   destinationDir = outputDirectory
   from (file(shadowJar.archivePath)) {
@@ -96,6 +110,8 @@ task copyToOutput(type: Copy) {
   from (openCvUnzipLocation) {
     exclude 'META-INF'
     exclude '**/MANIFEST.MF'
+  }
+  from (ntcoreUnzipLocation + "/linux/nativearm") {
   }
   if (buildType == "windows") {
     from (file("${buildDir}/run${projectName}.bat")) {
@@ -110,7 +126,7 @@ task zipOutput(type: Zip) {
   baseName = projectName
   duplicatesStrategy = 'exclude'
   dependsOn shadowJar
-  dependsOn unzipOpenCv
+  dependsOn unzipFiles
   destinationDir = outputDirectory
   from (file(shadowJar.archivePath)) {
   }
@@ -136,14 +152,14 @@ test {
   }
 }
 
-distZip.dependsOn unzipOpenCv
-distTar.dependsOn unzipOpenCv
+distZip.dependsOn unzipFiles
+distTar.dependsOn unzipFiles
 
 applicationDefaultJvmArgs = ["-Djava.library.path=${openCvUnzipLocation}"]
 
 build.dependsOn copyToOutput
 build.dependsOn zipOutput
-run.dependsOn unzipOpenCv
+run.dependsOn unzipFiles
 
 clean {
     delete outputDirectory

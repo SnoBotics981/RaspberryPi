@@ -1,5 +1,6 @@
 import edu.wpi.cscore.*;
-import edu.wpi.first.wpilibj.networktables.*;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import java.util.Collections;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +28,7 @@ public class VisionProcessor {
   private Color upperBound = new Color(180, 230, 255, Config.COLOR_TARGET_UPPER);
 
   public VisionProcessor() {
-    data = NetworkTable.getTable("navigation");
+    data = Main.netTable.getTable("navigation");
   }
 
   public void findCenter(MatOfPoint volume, Point target) {
@@ -107,8 +108,8 @@ public class VisionProcessor {
     VisionTarget.setAngle(new Double(filteredAngle).intValue());
     VisionTarget.setCloseness(new Double(range).intValue());
 
-    data.putNumber("angle", new Double(filteredAngle).intValue());
-    data.putNumber("closeness", new Double(range).intValue());
+    data.getEntry("angle").setDouble(filteredAngle);
+    data.getEntry("closeness").setDouble(range);
 
     // Reseet target detectors after each frame
     coords.clear();

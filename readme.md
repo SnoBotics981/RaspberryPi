@@ -13,8 +13,7 @@ The core dependencies are:
 The software is designed to run on a Raspberry Pi, but can be compiled from any system which supports Gradle.
 In the file `build.gradle`, there is a setting line which starts `ext.buildType =`.  This value can be changed to compile for other environments.
 
-Note it is possible to easily switch which system you want to target. To do so, just switch which build type is uncommented. When you do this, you will have to run a clean `gradlew clean` in order to
-clear out any old artifacts. 
+Note it is possible to easily switch which system you want to target. To do so, just switch which build type is uncommented. When you do this, you will have to run a clean `gradlew clean` in order to clear out any old artifacts. 
 
 ## USB cameras
 The code is designed to read from local cameras over the Raspberry Pi's USB ports.  Before launching the code, plug in a USB camera.  This device will be read as "/dev/video0" and is identified in the code as device 0.
@@ -24,6 +23,15 @@ To select between the types, open the `Main.java` file in `src/main/java`, and s
 ## Building and running on the Raspberry Pi
 If you are running the build for your specific platform on the device you plan on running, you can use `./gradlew run` to run the code directly. You can also run `./gradlew build` to run a build without executing it.
 When doing this, the output files will be placed into `output\`. From there, you can run either the .bat file on windows or the shell script on unix in order to run your project.
+
+The wpilib toolchain must be built on the Pi to allow the software to execute correctly
+1. Clone wpiutil from https://github.com/wpilibsuite/wpiutil
+   * Build & release: `./gradlew -PskipAthena publish`
+2. Clone ntcore from https://github.com/wpilibsuite/ntcore
+   * Build: `./gradlew -PskipAthena build`
+   * Publish `./gradlew -PskipAthena publish`
+
+By default, the gradle projects should publish to `~/releases/maven/development`.
 
 ## Building for another platform
 If you are building for another platform, trying to run `gradlew run` will not work, as the OpenCV binaries will not be set up correctly. In that case, when you run `gradlew build`, a zip file

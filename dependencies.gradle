@@ -42,6 +42,14 @@ ext.getOpenCvPlatformPackage = { ->
   }
 }
 
+def getJNIpackage(module, pkg, version) {
+  def classifier = getOpenCvPlatformPackage()
+  def dependency = project.dependencies.create("${pkg}.$module:$module-jni:$version:$classifier@jar")
+  def config = project.configurations.detachedConfiguration(dependency)
+  config.setTransitive(false)
+  return config.files[0].canonicalFile
+}
+
 task downloadOpenCv() {
     description = 'Downloads the OpenCV Native maven dependency.'
     group = 'WPILib'
@@ -51,11 +59,7 @@ task downloadOpenCv() {
     def armOpenCv
 
     doFirst {
-        def classifier = getOpenCvPlatformPackage()
-        def armOpenCvDependency = project.dependencies.create("org.opencv:opencv-jni:+:$classifier@jar")
-        def armOpenCvConfig = project.configurations.detachedConfiguration(armOpenCvDependency)
-        armOpenCvConfig.setTransitive(false)
-        armOpenCv = armOpenCvConfig.files[0].canonicalFile
+        armOpenCv = getJNIpackage("opencv", "org", "3.1.0")
     }
 
     doLast {
@@ -68,13 +72,42 @@ task downloadOpenCv() {
 }
 
 ext.openCvUnzipLocation = "$buildDir/opencv"
+ext.ntcoreUnzipLocation = "$buildDir/ntcore"
 
-// Create a task that will unzip the wpiutil files into a temporary build directory
-task unzipOpenCv(type: Copy) {
-    description = 'Unzips the wpiutil maven dependency so that the include files and libraries can be used'
+task downloadNtcoreJNI() {
+    description = 'Downloads the Ntcore Native maven dependency.'
     group = 'WPILib'
+    def depFolder = "$buildDir/dependencies"
+    def ntZip = file("$depFolder/ntcore.zip")
+    outputs.file(ntZip)
+    def armOpenNt
+
+    doFirst {
+        armOpenNt = getJNIpackage("ntcore", "edu.wpi.first", "+")
+    }
+
+    doLast {
+        copy {
+            from armOpenNt
+            rename 'ntcore(.+)', 'ntcore.zip'
+            into depFolder
+        }
+    }
+}
+
+task unzipFiles() {
+    description = 'Extract contents from all jar-packaged zip files'
+    group = 'WPILib'
+    dependsOn downloadNtcoreJNI
     dependsOn downloadOpenCv
 
-    from zipTree(downloadOpenCv.outputs.files.singleFile)
-    into openCvUnzipLocation
+    copy {
+      from zipTree(downloadNtcoreJNI.outputs.files.singleFile)
+      into ntcoreUnzipLocation
+    }
+
+    copy {
+      from zipTree(downloadOpenCv.outputs.files.singleFile)
+      into openCvUnzipLocation
+    }
 }

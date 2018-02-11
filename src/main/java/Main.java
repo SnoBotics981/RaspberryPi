@@ -1,5 +1,7 @@
-import edu.wpi.first.wpilibj.networktables.*;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.tables.*;
+import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.cscore.*;
 import net.engio.mbassy.listener.Handler;
 import org.opencv.core.Mat;
@@ -12,11 +14,13 @@ import org.opencv.videoio.VideoWriter;
 
 public class Main {
   private static VisionProcessor vision;
+  public static final NetworkTableInstance netTable = NetworkTableInstance.getDefault();
   private static NetworkTable data;
 
   public static void main(String[] args) {
     // Loads our OpenCV library. This MUST be included
     System.loadLibrary("opencv_java310");
+    System.loadLibrary("ntcore");
 
     // NetworkManager handles boilerplate code to detect the runtime environment
     NetworkManager scanner = new NetworkManager();
@@ -29,17 +33,15 @@ public class Main {
     // If the teamNumber code detects the roboRIO, connect using the computed team number
     // If no roboRIO was detected, run the code in server mode
     if (0 == teamNumber) {
-      NetworkTable.setServerMode();
+      netTable.startServer();
     } else {
-      NetworkTable.setClientMode();
-      NetworkTable.setTeam(teamNumber);
+      netTable.startClientTeam(teamNumber);
     }
 
-    NetworkTable.initialize();
     Config.initialize();
     int frameRate = Config.VIDEO_RATE.intValue();
     System.out.println("Framerate from config: " + frameRate);
-    data = NetworkTable.getTable("navigation");
+    data = netTable.getTable("navigation");
 
     /******************************************************
      * Configure USB Camera (device links are /dev/video#)
@@ -52,19 +54,19 @@ public class Main {
     // If the second USB camera is present, run an isolated video feed for the driver
     // Note that this is the "Front" camera per physical layout
     MjpegServer rvStream = new MjpegServer("Rear-view Server", 1188);
-    UsbCamera rearView = setUsbCamera(1, rvStream);
-    rearView.setResolution(320,240);
-    rearView.setFPS(frameRate);
+    UsbCameraManager rearView = new UsbCameraManager("Rear-view", 1);
+    rvStream.setSource(rearView);
 
     // This image feed displays the debug log (whatever the filters computed)
-    CvSource imageSource = new CvSource("CV Image Source", VideoMode.PixelFormat.kMJPEG, 320, 240, 15);
-    MjpegServer cvStream = new MjpegServer("CV Image Stream", 1186);
-    cvStream.setSource(imageSource);
+    VideoSource imageSource = new VideoSource("CV Image Source");
+//    MjpegServer debugStream = new MjpegServer("CV Image Stream", 1186);
+    MjpegServer debugStream = CameraServer.getInstance().addServer("Debug Stream", 1186);
+    debugStream.setSource(imageSource);
     VideoWriter logDebugStream = new VideoWriter(
         "debugLog.mjpeg", VideoWriter.fourcc('M','J','P','G'), 15.0, new Size(320, 240), true);
 
-    CvSource rawVideoFeed = new CvSource("Unprocessed Video Feed", VideoMode.PixelFormat.kMJPEG, 320, 240, 15);
-    MjpegServer rawView   = new MjpegServer("CV Image Stream", 1187);
+    VideoSource rawVideoFeed = new VideoSource("Unprocessed Video Feed");
+    MjpegServer rawView = new MjpegServer("CV Image Stream", 1187);
     rawView.setSource(rawVideoFeed);
 
     // This creates a CvSink for us to use. This grabs images from our selected camera,
@@ -88,7 +90,7 @@ public class Main {
     // Infinitely process camera feeds
     while (true) {
       // Allow the robot/dashboard/other to select a camera for vision processing
-      String sourceCamera = data.getString("visionCamera", "0");
+      String sourceCamera = data.getEntry("visionCamera").getString("0");
       // Grab a frame. If it has a frame time of 0, there was an error.
       // If so, skip and continue
       long frameTime = imageSink.grabFrame(inputImage);
@@ -103,15 +105,6 @@ public class Main {
       inputImage.release();
       System.gc();
     }
-  }
-
-  private static UsbCamera setUsbCamera(int cameraId, MjpegServer server) {
-    // This gets the image from a USB camera
-    // Usually this will be on device 0, but there are other overloads
-    // that can be used
-    UsbCamera camera = new UsbCamera("CoprocessorCamera", cameraId);
-    server.setSource(camera);
-    return camera;
   }
 
   public static class UsbCameraManager extends UsbCamera {
@@ -136,6 +129,16 @@ public class Main {
     public void onVideoRate(Config msg) {
       System.out.println("Video Rate event detected: '" + msg.getValue() + "'");
       this.setFPS(msg.intValue());
+    }
+  }
+
+  public static class VideoSource extends CvSource {
+    public VideoSource(String sourceName) {
+      super(sourceName,
+          VideoMode.PixelFormat.kMJPEG,
+          Config.VIDEO_WIDTH.intValue(),
+          Config.VIDEO_HEIGHT.intValue(),
+	  Config.VIDEO_RATE.intValue());
     }
   }
 }
