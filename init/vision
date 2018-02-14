@@ -24,8 +24,8 @@
 #1) Build new code with './gradlew build'
 #2) Relaunch service with 'sudo systemctl restart vision'
 
-
-# If you want a command to always run, put it here
+### STOPPING ###
+#1) Temporarily stop service with 'sudo systemctl stop vision'
 
 # Carry out specific functions when asked to by the system
 case "$1" in
