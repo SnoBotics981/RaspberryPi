@@ -54,10 +54,14 @@ Video feeds are available at the following network addresses:
 
 The navigation feed returns as a JSON object containing two values:
 * 'direction':  
-    The relative angle to the target's center, in a range of +/-360.  Positive numbers are to the right, negative numbers to the left.
+    The relative angle to the target's center, in a range of +/-160.  Positive numbers are to the right, negative numbers to the left.
     The values scale based upon the viewfinder angle of camera #0 (front-facing).
 * 'closeness':  
     A relative scale indicating how close the target is to the camera.  This value is computed based on the size and
 relative distance of the two targets (when visible).
     The value is larger when the camera is close to the target.  See `distance.md` for more details.
 
+The navigation values are published through the FRC's "NetworkTables" library. The value are published in a table named 'navigation', with the following defined entries:
+* `visionCamera` (String): USB ID referencing the active vision camera source (not actively used yet).
+* `angle` (Double): relative position of the target in the viewport, ranging from +/-160 (depending on the viewport size in pixels).  The center position is `0.0`.
+* `closeness` (Double):  The relative distance to the target (deprecated).
