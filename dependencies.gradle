@@ -20,7 +20,7 @@ ext.cscoreDep = { ->
     return "edu.wpi.cscore.java:cscore:+:$classifier"
 }
 
-ext.getOpenCvPlatformPackage = { ->
+ext.getOpenCvPlatformPackage = { module ->
   if (buildType == "windows") {
     if (System.getProperty("os.arch") == "amd64") {
       return "windows-x86_64_2015"
@@ -36,14 +36,18 @@ ext.getOpenCvPlatformPackage = { ->
   } else if (buildType == "armhf") {
     return "linux-armhf"
   } else if (buildType == "arm-raspbian") {
-    return "linux-arm-raspbian"
+    if (module == "ntcore") {
+      return "linuxnativearm"
+    } else {
+      return "linux-arm-raspbian"
+    }
   } else {
     return buildType
   }
 }
 
 def getJNIpackage(module, pkg, version) {
-  def classifier = getOpenCvPlatformPackage()
+  def classifier = getOpenCvPlatformPackage(module)
   def dependency = project.dependencies.create("${pkg}.$module:$module-jni:$version:$classifier@jar")
   def config = project.configurations.detachedConfiguration(dependency)
   config.setTransitive(false)
