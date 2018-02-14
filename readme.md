@@ -20,7 +20,7 @@ The code is designed to read from local cameras over the Raspberry Pi's USB port
 
 To select between the types, open the `Main.java` file in `src/main/java`, and scroll down to the line that says "Selecting a Camera". Follow the directions there to select one.
 
-## Building and running on the Raspberry Pi
+# Building and running on the Raspberry Pi
 If you are running the build for your specific platform on the device you plan on running, you can use `./gradlew run` to run the code directly. You can also run `./gradlew build` to run a build without executing it.
 When doing this, the output files will be placed into `output\`. From there, you can run either the .bat file on windows or the shell script on unix in order to run your project.
 
@@ -32,6 +32,10 @@ The wpilib toolchain must be built on the Pi to allow the software to execute co
    * Publish `./gradlew -PskipAthena publish`
 
 By default, the gradle projects should publish to `~/releases/maven/development`.
+
+## Preparing the init script
+
+The init script allows the vision software to auto-start when the Raspbery Pi boots up, and allows the vision software to run in the background during testing.  The init script is stored in the `init` folder in the repository, and contains documentation for the install process there.
 
 ## Building for another platform
 If you are building for another platform, trying to run `gradlew run` will not work, as the OpenCV binaries will not be set up correctly. In that case, when you run `gradlew build`, a zip file
