@@ -1,8 +1,8 @@
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.tables.*;
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.cscore.*;
+import java.util.Arrays;
 import net.engio.mbassy.listener.Handler;
 import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
@@ -16,6 +16,7 @@ public class Main {
   private static VisionProcessor vision;
   public static final NetworkTableInstance netTable = NetworkTableInstance.getDefault();
   private static NetworkTable data;
+  private static CameraServer manager = CameraServer.getInstance();
 
   public static void main(String[] args) {
     // Loads our OpenCV library. This MUST be included
@@ -37,6 +38,10 @@ public class Main {
     } else {
       netTable.startClientTeam(teamNumber);
     }
+    netTable.addLogger(log -> {
+      System.out.println("netTable(" + log.level + "): " + log.message);
+      netTable.flush();
+    }, 0, 9);
 
     Config.initialize();
     int frameRate = Config.VIDEO_RATE.intValue();
@@ -49,25 +54,27 @@ public class Main {
      * Standardizing on 320x240 as the video resolution
      ******************************************************/
 
+    UsbCameraInfo[] stats = UsbCamera.enumerateUsbCameras();
+    for (int i=0; i < stats.length; i++) {
+      System.out.println("Camera #" + stats[i].dev + ": " + stats[i].name +
+          " => " + stats[i].path);
+    }
+
+    // Consider storing the cameras in an array
     UsbCameraManager camera = new UsbCameraManager("Vision Camera", 0);
+    UsbCameraManager rearView = new UsbCameraManager("Rear-view", 1);
 
     // If the second USB camera is present, run an isolated video feed for the driver
     // Note that this is the "Front" camera per physical layout
-    MjpegServer rvStream = new MjpegServer("Rear-view Server", 1188);
-    UsbCameraManager rearView = new UsbCameraManager("Rear-view", 1);
+    MjpegServer rvStream = manager.addServer("Rear-view Server", 1188);
     rvStream.setSource(rearView);
 
     // This image feed displays the debug log (whatever the filters computed)
-    VideoSource imageSource = new VideoSource("CV Image Source");
-//    MjpegServer debugStream = new MjpegServer("CV Image Stream", 1186);
-    MjpegServer debugStream = CameraServer.getInstance().addServer("Debug Stream", 1186);
-    debugStream.setSource(imageSource);
+    VideoStream debugStream = new VideoStream("CV Image Source", "Debug Stream", 1186);
+    VideoStream rawView = new VideoStream("Unprocessed Video Feed", "CV Image Stream", 1187);
+
     VideoWriter logDebugStream = new VideoWriter(
         "debugLog.mjpeg", VideoWriter.fourcc('M','J','P','G'), 15.0, new Size(320, 240), true);
-
-    VideoSource rawVideoFeed = new VideoSource("Unprocessed Video Feed");
-    MjpegServer rawView = new MjpegServer("CV Image Stream", 1187);
-    rawView.setSource(rawVideoFeed);
 
     // This creates a CvSink for us to use. This grabs images from our selected camera,
     // and will allow us to use those images in OpenCV.  To toggle processing
@@ -96,12 +103,13 @@ public class Main {
       long frameTime = imageSink.grabFrame(inputImage);
       if (frameTime == 0) continue;
 
-      vision.findTargets(inputImage, imageSource);
+      vision.findTargets(inputImage,debugStream.source());
 
       // Display the raw camera feed in a separate filter
       Imgproc.line(inputImage, new Point(100,20), new Point(100,220), new Scalar(0, 255, 0), 7);
       Imgproc.line(inputImage, new Point(220,20), new Point(220,220), new Scalar(0, 255, 0), 7);
-      rawVideoFeed.putFrame(inputImage);
+      rawView.source().putFrame(inputImage);
+//      rawVideoFeed.putFrame(inputImage);
       inputImage.release();
       System.gc();
     }
@@ -121,7 +129,8 @@ public class Main {
     // Generic handler, will process any config event
     @Handler
     public void onChange(Config option) {
-      System.out.println("Event handler process change event: " + option.id + "=>" + option.getValue());
+      System.out.println("Event handler process change event: " + option.id +
+          "=>" + option.getValue());
     }
 
     // Limited handler, will only respond when Config.VIDEO_RATE is modified
@@ -132,13 +141,41 @@ public class Main {
     }
   }
 
-  public static class VideoSource extends CvSource {
-    public VideoSource(String sourceName) {
-      super(sourceName,
-          VideoMode.PixelFormat.kMJPEG,
-          Config.VIDEO_WIDTH.intValue(),
-          Config.VIDEO_HEIGHT.intValue(),
-	  Config.VIDEO_RATE.intValue());
+  public static class VideoStream {
+    MjpegServer stream;
+    CvSource source;
+    String title, sourceName;
+    int port;
+
+    public VideoStream(String inputSource, String title, int port) {
+      this.title = title;
+      this.port = port;
+      this.sourceName = inputSource;
+      stream = enable();
+      updateSource();
+      Config.bus.subscribe(this);
     }
+
+    public void disable() { manager.removeServer(title); }
+    public MjpegServer enable()  { return manager.addServer(title, port); }
+    public CvSource source() { return source; }
+
+    private void updateSource() {
+      this.source = new CvSource(
+        sourceName,
+        VideoMode.PixelFormat.kMJPEG,
+        Config.VIDEO_WIDTH.intValue(),
+        Config.VIDEO_HEIGHT.intValue(),
+        Config.VIDEO_RATE.intValue()
+      );
+      stream.setSource(source);
+    }
+
+    @Handler(condition = "msg == 'VIDEO_RATE'")
+    public void onVideoRate(Config msg) {
+      System.out.println("Update VideoStream fps: '" + msg.getValue() + "'");
+      updateSource();
+    }
+
   }
 }
