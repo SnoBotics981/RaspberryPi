@@ -5,6 +5,18 @@ mixin config(keyword, display)
   if block
     block
   p
+mixin checkbox(keyword, display, value)
+  label(for=keyword)=display
+  - var next = "on"
+  case value
+    when "true"
+      - next = "false"
+    when "false"
+      - next = "true"
+  input(type='checkbox' id=keyword name=keyword, value=next)
+  if block
+    block
+  p
 html
   head
     title='Vision Processing Configuration'
@@ -16,6 +28,8 @@ html
         span= Config.COLOR_TARGET_LOWER
       +config('target.color.upper', 'Color Filter (upper bound): ')
         span= Config.COLOR_TARGET_UPPER
+      +checkbox('camera.debug', 'Toggle debug feed: ', Config.CAMERA_DEBUG)
+        span= "Current state[" + Config.CAMERA_DEBUG + "]"
       input(type='submit' value='Update')
     form(action='/api/save' method='post')
       input(type='submit' value='Save Settings')

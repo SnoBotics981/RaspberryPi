@@ -7,6 +7,7 @@ import net.engio.mbassy.subscription.SubscriptionContext;
 import org.opencv.core.Scalar;
 
 public class Color extends Scalar {
+  // Consider using a Map<Color, String> to support updating the filter key at runtime
   private static List<String> filterTags = new ArrayList<String>();
   private String filter = "";
 

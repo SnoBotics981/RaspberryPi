@@ -12,7 +12,9 @@ public enum Config {
   VIDEO_RATE  ("video.rate",   "15"),
   // For this approach, the HSV object should split the values separate integers
   COLOR_TARGET_LOWER ("target.color.lower", "50,8,200"),
-  COLOR_TARGET_UPPER ("target.color.upper", "180,230,255");
+  COLOR_TARGET_UPPER ("target.color.upper", "180,230,255"),
+  // Camera config options
+  CAMERA_DEBUG("camera.debug", "true");
 
   public final String id;
   private volatile String value;
