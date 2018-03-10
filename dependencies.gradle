@@ -48,7 +48,9 @@ ext.getOpenCvPlatformPackage = { module ->
 
 def getJNIpackage(module, pkg, version) {
   def classifier = getOpenCvPlatformPackage(module)
+  def packageSpec = "${pkg}.$module:$module-jni:$version:$classifier@jar"
   def dependency = project.dependencies.create("${pkg}.$module:$module-jni:$version:$classifier@jar")
+  System.out.println("Current JNI package: " + packageSpec)
   def config = project.configurations.detachedConfiguration(dependency)
   config.setTransitive(false)
   return config.files[0].canonicalFile
@@ -99,19 +101,29 @@ task downloadNtcoreJNI() {
     }
 }
 
-task unzipFiles() {
-    description = 'Extract contents from all jar-packaged zip files'
+task unzipNtcore {
+    description = 'Unpack ntcore library'
     group = 'WPILib'
     dependsOn downloadNtcoreJNI
-    dependsOn downloadOpenCv
-
     copy {
       from zipTree(downloadNtcoreJNI.outputs.files.singleFile)
       into ntcoreUnzipLocation
     }
+}
+
+task unzipOpenCV {
+    description = 'Unack OpenCV library'
+    group = 'WPILib'
+    dependsOn downloadOpenCv
 
     copy {
       from zipTree(downloadOpenCv.outputs.files.singleFile)
       into openCvUnzipLocation
     }
+}
+
+task unzipFiles() {
+    description = 'Extract contents from all jar-packaged zip files'
+    dependsOn unzipNtcore
+    dependsOn unzipOpenCV
 }

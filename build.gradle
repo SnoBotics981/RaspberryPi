@@ -59,6 +59,17 @@ dependencies {
   testCompile 'junit:junit:4.12'
 }
 
+gradle.taskGraph.whenReady {taskGraph ->
+    println "Found task graph: " + taskGraph
+    println "Found " + taskGraph.allTasks.size() + " tasks."
+    taskGraph.allTasks.forEach { task ->
+        println task
+        task.dependsOn.forEach { dep ->
+            println "  - " + dep
+        }
+    }
+}
+
 jar {
   baseName = projectName
 }
