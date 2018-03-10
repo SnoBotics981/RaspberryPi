@@ -76,6 +76,8 @@ public class Main {
     VideoWriter logDebugStream = new VideoWriter(
         "debugLog.mjpeg", VideoWriter.fourcc('M','J','P','G'), 15.0, new Size(320, 240), true);
 
+    debugStream.setToggleFlag(Config.CAMERA_DEBUG.id);
+
     // This creates a CvSink for us to use. This grabs images from our selected camera,
     // and will allow us to use those images in OpenCV.  To toggle processing
     // feeds (below), set the source to use a different device.
