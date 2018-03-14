@@ -105,9 +105,11 @@ task unzipNtcore {
     description = 'Unpack ntcore library'
     group = 'WPILib'
     dependsOn downloadNtcoreJNI
-    copy {
-      from zipTree(downloadNtcoreJNI.outputs.files.singleFile)
-      into ntcoreUnzipLocation
+    doLast {
+        copy {
+            from zipTree(downloadNtcoreJNI.outputs.files.singleFile)
+            into ntcoreUnzipLocation
+        }
     }
 }
 
@@ -116,9 +118,11 @@ task unzipOpenCV {
     group = 'WPILib'
     dependsOn downloadOpenCv
 
-    copy {
-      from zipTree(downloadOpenCv.outputs.files.singleFile)
-      into openCvUnzipLocation
+    doLast {
+        copy {
+            from zipTree(downloadOpenCv.outputs.files.singleFile)
+            into openCvUnzipLocation
+        }
     }
 }
 
