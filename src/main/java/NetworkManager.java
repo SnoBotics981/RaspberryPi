@@ -45,7 +45,7 @@ public class NetworkManager {
     try {
       System.out.println("Use avahi to detect the configured team address");
       Process findTeamNumber = Runtime.getRuntime().exec(new String[]{
-        "bash","-c","avahi-browse -larpt | grep \"=;eth0;IPv4\" | grep \";Workstation;\""
+        "bash","-c","avahi-browse -larpt | grep \"=;eth0;IPv4\" | grep \";SSH Remote Terminal;\""
       });
       findTeamNumber.waitFor();
       BufferedReader data = new BufferedReader(
