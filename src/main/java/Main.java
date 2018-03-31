@@ -41,10 +41,6 @@ public class Main {
     } else {
       netTable.startClientTeam(teamNumber);
     }
-    netTable.addLogger(log -> {
-      System.out.println("netTable(" + log.level + "): " + log.message);
-      netTable.flush();
-    }, 0, 9);
 
     Config.initialize();
     int frameRate = Config.VIDEO_RATE.intValue();
@@ -63,21 +59,12 @@ public class Main {
           " => " + stats[i].path);
     }
 
-    // Consider storing the cameras in an array
+    // Limit the code to one camera to avoid uncertainty in allocation order
     UsbCameraManager camera = new UsbCameraManager("Vision Camera", 0);
-    UsbCameraManager rearView = new UsbCameraManager("Rear-view", 1);
-
-    // If the second USB camera is present, run an isolated video feed for the driver
-    // Note that this is the "Front" camera per physical layout
-    MjpegServer rvStream = manager.addServer("Rear-view Server", 1188);
-    rvStream.setSource(rearView);
 
     // This image feed displays the debug log (whatever the filters computed)
     VideoStream debugStream = new VideoStream("CV Image Source", "Debug Stream", 1186);
-    VideoStream rawView = new VideoStream("Unprocessed Video Feed", "CV Image Stream", 1187);
-
-    VideoWriter logDebugStream = new VideoWriter(
-        "debugLog.mjpeg", VideoWriter.fourcc('M','J','P','G'), 15.0, new Size(320, 240), true);
+    VideoStream rawView = new VideoStream("Unprocessed Video Feed", "Front View", 1187);
 
     debugStream.setToggleFlag(Config.CAMERA_DEBUG.id);
 
@@ -90,7 +77,6 @@ public class Main {
     // All Mats and Lists should be stored outside the loop to avoid allocations
     // as they are expensive to create
     Mat inputImage = new Mat();   // Get frame from camera
-//    Mat sharpen = new Mat();      // Sharpen an image using GaussianBlur
     vision = new VisionProcessor();
 
     // Embed a Jetty server for non-video content
@@ -100,14 +86,10 @@ public class Main {
     initVideoLog();
 
     System.out.println("Server ready, starting the camera feeds");
-    // Debug sample - force the angle to non-zero while testing the servlet
-    VisionTarget.setAngle(23);
 
     int frameCounter = 0;
     // Infinitely process camera feeds
     while (true) {
-      // Allow the robot/dashboard/other to select a camera for vision processing
-      String sourceCamera = data.getEntry("visionCamera").getString("0");
       // Grab a frame. If it has a frame time of 0, there was an error.
       // If so, skip and continue
       long frameTime = imageSink.grabFrame(inputImage);
@@ -123,7 +105,6 @@ public class Main {
       Imgproc.line(inputImage, new Point(100,20), new Point(100,220), new Scalar(0, 255, 0), 5);
       Imgproc.line(inputImage, new Point(220,20), new Point(220,220), new Scalar(0, 255, 0), 5);
       rawView.source().putFrame(inputImage);
-//      rawVideoFeed.putFrame(inputImage);
       inputImage.release();
       System.gc();
     }
