@@ -14,7 +14,8 @@ public enum Config {
   COLOR_TARGET_LOWER ("target.color.lower", "50,8,200"),
   COLOR_TARGET_UPPER ("target.color.upper", "180,230,255"),
   // Camera config options
-  CAMERA_DEBUG("camera.debug", "true");
+  CAMERA_DEBUG("camera.debug", "true"),
+  DEBUG_MATCHNAME("debug.matchname", "");
 
   public final String id;
   private volatile String value;
@@ -44,6 +45,10 @@ public enum Config {
       data[i] = Double.parseDouble(array[i]);
     }
     return data;
+  }
+
+  public void update(int intValue) {
+    this.update(Integer.toString(intValue));
   }
 
   public synchronized void update(String newValue) {

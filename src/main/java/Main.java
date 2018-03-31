@@ -2,13 +2,16 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.cscore.*;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import net.engio.mbassy.listener.Handler;
 import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
 import org.opencv.core.Point;
 import org.opencv.core.Size;
-import org.opencv.core.MatOfPoint;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoWriter;
 
@@ -92,10 +95,15 @@ public class Main {
 
     // Embed a Jetty server for non-video content
     new HttpManager().runServer();
+
+    // Prepare the image capture for video debugging
+    initVideoLog();
+
     System.out.println("Server ready, starting the camera feeds");
     // Debug sample - force the angle to non-zero while testing the servlet
     VisionTarget.setAngle(23);
 
+    int frameCounter = 0;
     // Infinitely process camera feeds
     while (true) {
       // Allow the robot/dashboard/other to select a camera for vision processing
@@ -107,13 +115,39 @@ public class Main {
 
       vision.findTargets(inputImage,debugStream.source());
 
+      // Capture approximately one frame per second to the frame log
+      if (frameCounter++ == Config.VIDEO_RATE.intValue()) {
+      }
+
       // Display the raw camera feed in a separate filter
-      Imgproc.line(inputImage, new Point(100,20), new Point(100,220), new Scalar(0, 255, 0), 7);
-      Imgproc.line(inputImage, new Point(220,20), new Point(220,220), new Scalar(0, 255, 0), 7);
+      Imgproc.line(inputImage, new Point(100,20), new Point(100,220), new Scalar(0, 255, 0), 5);
+      Imgproc.line(inputImage, new Point(220,20), new Point(220,220), new Scalar(0, 255, 0), 5);
       rawView.source().putFrame(inputImage);
 //      rawVideoFeed.putFrame(inputImage);
       inputImage.release();
       System.gc();
+    }
+  }
+
+  // By default, use a numbering system for each test run.  Config option
+  // 'debug.matchname' will be used as a folder name, so if the name is changed
+  // at runtime the logging code should switch to the new folder immediately
+  private static void initVideoLog() {
+    File[] logHistory = new File("../video-logs").listFiles();
+    int logNumber = 0;
+
+    for(File record: logHistory) {
+      if (record.isDirectory()) { ++logNumber; }
+    }
+    while (Files.exists(Paths.get(Integer.toString(logNumber)))) {
+      ++logNumber;
+    }
+    Config.DEBUG_MATCHNAME.update(logNumber);
+    try {
+      System.out.println("Attempting to create folder numbered '" + logNumber + "'");
+      Files.createDirectory(Paths.get("../video-logs", Integer.toString(logNumber)));
+    } catch (IOException error) {
+      System.err.println("WARNING: unable to create log directory '../video-logs/" + logNumber + "'");
     }
   }
 
