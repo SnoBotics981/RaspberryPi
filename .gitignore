@@ -6,3 +6,4 @@ output/*
 /.gradle/
 /test/
 *.log
+video-logs/*

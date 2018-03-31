@@ -12,6 +12,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
 import org.opencv.core.Point;
 import org.opencv.core.Size;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoWriter;
 
@@ -20,6 +21,7 @@ public class Main {
   public static final NetworkTableInstance netTable = NetworkTableInstance.getDefault();
   private static NetworkTable data;
   private static CameraServer manager = CameraServer.getInstance();
+  public static final String imageLogPrefix = "../video-logs";
 
   public static void main(String[] args) {
     // Loads our OpenCV library. This MUST be included
@@ -88,6 +90,9 @@ public class Main {
     System.out.println("Server ready, starting the camera feeds");
 
     int frameCounter = 0;
+    int videoFrame = 0;
+    String frameFilePath = "";
+
     // Infinitely process camera feeds
     while (true) {
       // Grab a frame. If it has a frame time of 0, there was an error.
@@ -97,8 +102,18 @@ public class Main {
 
       vision.findTargets(inputImage,debugStream.source());
 
+      frameFilePath = Paths.get(
+          imageLogPrefix,
+          Config.DEBUG_MATCHNAME.getValue(),
+          Integer.toString(videoFrame) + ".jpg").toString();
+
       // Capture approximately one frame per second to the frame log
-      if (frameCounter++ == Config.VIDEO_RATE.intValue()) {
+      // NOTE: frameCounter is only accurate above this point in the loop
+      if (frameCounter++ == Config.VIDEO_RATE.intValue()
+          && !Config.DEBUG_MATCHNAME.getValue().equals("")) {
+        Imgcodecs.imwrite(frameFilePath, inputImage);
+        videoFrame++;
+        frameCounter = 0;
       }
 
       // Display the raw camera feed in a separate filter
@@ -114,9 +129,10 @@ public class Main {
   // 'debug.matchname' will be used as a folder name, so if the name is changed
   // at runtime the logging code should switch to the new folder immediately
   private static void initVideoLog() {
-    File[] logHistory = new File("../video-logs").listFiles();
+    File[] logHistory = new File(imageLogPrefix).listFiles();
     int logNumber = 0;
 
+    // A simpler approach would be to just set logNumber to the number of files & folders
     for(File record: logHistory) {
       if (record.isDirectory()) { ++logNumber; }
     }
@@ -126,9 +142,11 @@ public class Main {
     Config.DEBUG_MATCHNAME.update(logNumber);
     try {
       System.out.println("Attempting to create folder numbered '" + logNumber + "'");
-      Files.createDirectory(Paths.get("../video-logs", Integer.toString(logNumber)));
+      Files.createDirectory(Paths.get(imageLogPrefix, Integer.toString(logNumber)));
     } catch (IOException error) {
-      System.err.println("WARNING: unable to create log directory '../video-logs/" + logNumber + "'");
+      System.err.println(
+          "WARNING: unable to create log directory '"
+          + imageLogPrefix + "/" + logNumber + "'");
     }
   }
 
