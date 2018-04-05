@@ -109,10 +109,12 @@ public class Main {
 
       // Capture approximately one frame per second to the frame log
       // NOTE: frameCounter is only accurate above this point in the loop
-      if (frameCounter++ == Config.VIDEO_RATE.intValue()
-          && !Config.DEBUG_MATCHNAME.getValue().equals("")) {
-        Imgcodecs.imwrite(frameFilePath, inputImage);
-        videoFrame++;
+      if (frameCounter++ == Config.VIDEO_RATE.intValue()) {
+        if (!Config.DEBUG_MATCHNAME.getValue().equals("")
+            && isMatchInProgress() ) {
+          Imgcodecs.imwrite(frameFilePath, inputImage);
+          videoFrame++;
+        }
         frameCounter = 0;
       }
 
@@ -129,6 +131,15 @@ public class Main {
   // 'debug.matchname' will be used as a folder name, so if the name is changed
   // at runtime the logging code should switch to the new folder immediately
   private static void initVideoLog() {
+    // Create log prefix folder if it does not exist
+    try {
+      if (Files.notExists(Paths.get(imageLogPrefix))) {
+        Files.createDirectory(Paths.get(imageLogPrefix));
+      }
+    } catch (IOException error) {
+      System.err.println("WARNING: unable to create image log storage path");
+    }
+
     File[] logHistory = new File(imageLogPrefix).listFiles();
     int logNumber = 0;
 
@@ -136,7 +147,7 @@ public class Main {
     for(File record: logHistory) {
       if (record.isDirectory()) { ++logNumber; }
     }
-    while (Files.exists(Paths.get(Integer.toString(logNumber)))) {
+    while (Files.exists(Paths.get(imageLogPrefix, Integer.toString(logNumber)))) {
       ++logNumber;
     }
     Config.DEBUG_MATCHNAME.update(logNumber);
@@ -148,6 +159,11 @@ public class Main {
           "WARNING: unable to create log directory '"
           + imageLogPrefix + "/" + logNumber + "'");
     }
+  }
+
+  private static Boolean isMatchInProgress() {
+//    System.out.println(Arrays.toString(data.getKeys().toArray()));
+    return data.getEntry("fmsAttached").getBoolean(false);
   }
 
   public static class UsbCameraManager extends UsbCamera {
