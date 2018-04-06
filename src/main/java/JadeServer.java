@@ -17,6 +17,7 @@ public class JadeServer extends HttpServlet {
       config.put(option.name(), option.getValue());
     }
     model.put("Config", config);
+    model.put("Env", Environment.get());
 
     String html = Jade4J.render("../static/config.jade", model);
 

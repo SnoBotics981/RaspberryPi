@@ -18,7 +18,8 @@ import org.opencv.videoio.VideoWriter;
 
 public class Main {
   private static VisionProcessor vision;
-  public static final NetworkTableInstance netTable = NetworkTableInstance.getDefault();
+  public static final NetworkTableInstance netTable =
+      NetworkTableInstance.getDefault();
   private static NetworkTable data;
   private static CameraServer manager = CameraServer.getInstance();
   public static final String imageLogPrefix = "../video-logs";
@@ -81,11 +82,10 @@ public class Main {
     Mat inputImage = new Mat();   // Get frame from camera
     vision = new VisionProcessor();
 
-    // Embed a Jetty server for non-video content
+    // Initialize support processes
     new HttpManager().runServer();
-
-    // Prepare the image capture for video debugging
     initVideoLog();
+    Environment.get();
 
     System.out.println("Server ready, starting the camera feeds");
 

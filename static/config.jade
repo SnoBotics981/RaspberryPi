@@ -17,6 +17,14 @@ mixin checkbox(keyword, display, value)
   if block
     block
   p
+mixin dropdown(display, list)
+  label(for=keyword)=display
+  select
+    for elem in list
+      option(value=elem)= elem
+  if block
+    block
+  p
 html
   head
     title='Vision Processing Configuration'
@@ -30,6 +38,8 @@ html
         span= Config.COLOR_TARGET_UPPER
       +checkbox('camera.debug', 'Toggle debug feed: ', Config.CAMERA_DEBUG)
         span= "Current state[" + Config.CAMERA_DEBUG + "]"
+      +dropdown('Debug match: ', Env.matches)
+        span= Env.activeMatch()
       input(type='submit' value='Update')
     form(action='/api/save' method='post')
       input(type='submit' value='Save Settings')
