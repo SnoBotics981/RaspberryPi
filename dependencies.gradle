@@ -37,7 +37,7 @@ ext.getOpenCvPlatformPackage = { module ->
     return "linux-armhf"
   } else if (buildType == "arm-raspbian") {
     if (module == "ntcore") {
-      return "linuxnativearm"
+      return "linuxraspbian"
     } else {
       return "linux-arm-raspbian"
     }
