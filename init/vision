@@ -28,10 +28,15 @@
 #1) Temporarily stop service with 'sudo systemctl stop vision'
 
 # Carry out specific functions when asked to by the system
+
+# Rob changed to reference RasperryPi from /home/pi/git.
+#     Really want to make this part of the build system and maybe use
+#     sed to modify this line
+
 case "$1" in
   start)
     echo "Starting robot vision software"
-    cd /home/pi/RaspberryPi/output
+    cd /home/pi/git/RaspberryPi/output
     chmod +x runCameraVision
     ./runCameraVision > vision.log 2>vision.err &
     ;;
