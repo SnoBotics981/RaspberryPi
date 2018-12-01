@@ -122,7 +122,12 @@ task copyToOutput(type: Copy) {
     exclude 'META-INF'
     exclude '**/MANIFEST.MF'
   }
-  from (ntcoreUnzipLocation + "/linux/nativearm") {
+
+  // old code:
+  // from (ntcoreUnzipLocation + "/linux/nativearm") {
+
+  from (ntcoreUnzipLocation + "/linux/raspbian") {
+
   }
   if (buildType == "windows") {
     from (file("${buildDir}/run${projectName}.bat")) {
