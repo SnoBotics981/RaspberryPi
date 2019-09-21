@@ -37,8 +37,8 @@ dependencies {
   compile ntcoreDep()
   compile cscoreDep()
   compile 'org.opencv:opencv-java:3.1.0'
-  compile 'org.eclipse.jetty:jetty-server:+'
-  compile 'org.eclipse.jetty:jetty-servlet:+'
+  compile 'org.eclipse.jetty:jetty-server:9.+'
+  compile 'org.eclipse.jetty:jetty-servlet:9.+'
   compile 'commons-io:commons-io:+'
   compile 'org.json:json:+'
   compile 'net.engio:mbassador:+'
